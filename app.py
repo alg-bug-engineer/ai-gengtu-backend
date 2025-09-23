@@ -29,7 +29,7 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a_very_secret_key_for_s
 app.config.update(
     SESSION_COOKIE_SAMESITE='Lax',
     # SESSION_COOKIE_SECURE=False, # 在本地开发时可以设置为 False
-    SESSION_COOKIE_DOMAIN='8.149.232.39' # 设置为你的后端域名或IP
+    # SESSION_COOKIE_DOMAIN='8.149.232.39' # 设置为你的后端域名或IP
 )
 app.config['CORS_HEADERS'] = 'Content-Type'
 
