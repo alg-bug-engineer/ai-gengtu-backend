@@ -1,23 +1,47 @@
-import { useState } from 'react';
+// pages/index.js
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import Head from 'next/head';
-import styles from '../styles/Home.module.css'; // 引入样式文件
+import styles from '../styles/Home.module.css';
 
 export default function HomePage() {
   const [answer, setAnswer] = useState('');
   const [imageUrl, setImageUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [credits, setCredits] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const router = useRouter();
+
+  // 检查登录状态和获取用户额度
+  useEffect(() => {
+    async function checkLogin() {
+      try {
+        const res = await fetch('http://localhost:5550/api/user', {credentials: 'include'});
+        if (res.ok) {
+          const data = await res.json();
+          setIsLoggedIn(true);
+          setCredits(data.credits);
+        } else {
+          // 未登录，重定向到登录页
+          setIsLoggedIn(false);
+          router.push('/login');
+        }
+      } catch (err) {
+        console.error('Fetch user info error:', err);
+        setIsLoggedIn(false);
+        router.push('/login');
+      }
+    }
+    checkLogin();
+  }, [router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // 阻止表单提交时，浏览器默认刷新行为
-    
-    // 状态初始化，开始请求
     setLoading(true);
     setError(null);
     setImageUrl(null);
 
-    // 验证用户输入
     if (!answer) {
       setError('请输入一个谜底词语。');
       setLoading(false);
@@ -25,29 +49,35 @@ export default function HomePage() {
     }
 
     try {
-      // 向您的 Flask API 发送请求
-      // 请确保您的 Flask 服务正在运行，并且 URL 正确。
-      // 在本地开发中，通常是 http://localhost:5000。
-      const response = await fetch('http://localhost:5550/generate_meme', {
+      const response = await fetch('http://localhost:5550/api/generate_meme', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ answer }),
+        credentials: 'include'
       });
 
-      // 检查响应状态
+      if (response.status === 402) {
+        const errorData = await response.json();
+        throw new Error(errorData.message);
+      }
+      
       if (!response.ok) {
-        // 如果 API 响应状态码不是 2xx，抛出错误
         const errorData = await response.json();
         throw new Error(errorData.message || 'API 请求失败，请检查后端服务。');
       }
 
-      // 获取响应的 Blob 数据
       const imageBlob = await response.blob();
-      // 将 Blob 数据转换成一个本地 URL
       const objectURL = URL.createObjectURL(imageBlob);
       setImageUrl(objectURL);
+
+      // 生成成功后，重新获取用户额度
+      const userRes = await fetch('http://localhost:5550/api/user', {credentials: 'include'});
+      if (userRes.ok) {
+        const userData = await userRes.json();
+        setCredits(userData.credits);
+      }
 
     } catch (err) {
       console.error(err);
@@ -56,6 +86,11 @@ export default function HomePage() {
       setLoading(false);
     }
   };
+  
+  // 只有在登录后才渲染主界面
+  if (!isLoggedIn) {
+    return null;
+  }
 
   return (
     <div className={styles.container}>
@@ -67,7 +102,9 @@ export default function HomePage() {
 
       <main className={styles.main}>
         <h1 className={styles.title}>AI 梗图生成器</h1>
-        <p className={styles.description}>输入一个词语作为梗图谜底，让 AI 创作！</p>
+        <p className={styles.description}>
+          剩余额度：<span style={{ fontWeight: 'bold' }}>{credits !== null ? credits : '加载中...'}</span>
+        </p>
 
         <form className={styles.form} onSubmit={handleSubmit}>
           <input
@@ -76,9 +113,9 @@ export default function HomePage() {
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
             placeholder="例如：东施效颦"
-            disabled={loading}
+            disabled={loading || credits <= 0}
           />
-          <button type="submit" className={styles.button} disabled={loading}>
+          <button type="submit" className={styles.button} disabled={loading || credits <= 0}>
             {loading ? '生成中...' : '生成梗图'}
           </button>
         </form>
