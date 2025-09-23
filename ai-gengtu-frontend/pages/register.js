@@ -15,6 +15,8 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('handleSubmit: Registration form submitted.');
+    console.log('Attempting to register with email:', email);
     setLoading(true);
     setError(null);
     setSuccess(null);
@@ -28,18 +30,25 @@ export default function RegisterPage() {
         body: JSON.stringify({ email, password, invitationCode }),
       });
 
+      console.log('API call to /api/register finished with status:', response.status);
       const data = await response.json();
+
       if (!response.ok) {
+        console.error('Registration failed. API message:', data.message);
         throw new Error(data.message || 'Registration failed');
       }
+
+      console.log('Registration successful. API message:', data.message);
       setSuccess('注册成功，正在跳转到登录页面...');
       setTimeout(() => {
+        console.log('Redirecting to login page.');
         router.push('/login');
       }, 2000);
     } catch (err) {
       console.error('Registration error:', err);
       setError(err.message);
     } finally {
+      console.log('handleSubmit: Function finished. Setting loading to false.');
       setLoading(false);
     }
   };
@@ -52,7 +61,10 @@ export default function RegisterPage() {
         <input
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            console.log('Email input changed:', e.target.value);
+          }}
           placeholder="邮箱"
           disabled={loading}
           style={{ padding: '0.5rem', fontSize: '1rem' }}
@@ -60,7 +72,10 @@ export default function RegisterPage() {
         <input
           type="password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            console.log('Password input changed.');
+          }}
           placeholder="密码"
           disabled={loading}
           style={{ padding: '0.5rem', fontSize: '1rem' }}
@@ -68,7 +83,10 @@ export default function RegisterPage() {
         <input
           type="text"
           value={invitationCode}
-          onChange={(e) => setInvitationCode(e.target.value)}
+          onChange={(e) => {
+            setInvitationCode(e.target.value);
+            console.log('Invitation Code input changed:', e.target.value);
+          }}
           placeholder="邀请码"
           disabled={loading}
           style={{ padding: '0.5rem', fontSize: '1rem' }}

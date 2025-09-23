@@ -13,6 +13,8 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('handleSubmit: Login form submitted.');
+    console.log('Attempting to log in with email:', email);
     setLoading(true);
     setError(null);
 
@@ -26,17 +28,21 @@ export default function LoginPage() {
         credentials: 'include', 
       });
 
+      console.log('API call to /api/login finished with status:', response.status);
+
       const data = await response.json();
       if (!response.ok) {
+        console.error('Login failed. API message:', data.message);
         throw new Error(data.message || 'Login failed');
       }
 
-      // 登录成功，重定向到主页
+      console.log('Login successful. Redirecting to home page.');
       router.push('/');
     } catch (err) {
       console.error('Login error:', err);
       setError(err.message);
     } finally {
+      console.log('handleSubmit: Function finished. Setting loading to false.');
       setLoading(false);
     }
   };
@@ -49,7 +55,10 @@ export default function LoginPage() {
         <input
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            console.log('Email input changed:', e.target.value);
+          }}
           placeholder="邮箱"
           disabled={loading}
           style={{ padding: '0.5rem', fontSize: '1rem' }}
@@ -57,7 +66,10 @@ export default function LoginPage() {
         <input
           type="password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            console.log('Password input changed.');
+          }}
           placeholder="密码"
           disabled={loading}
           style={{ padding: '0.5rem', fontSize: '1rem' }}

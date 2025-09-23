@@ -15,39 +15,45 @@ export default function HomePage() {
 
   // 检查登录状态和获取用户额度
   useEffect(() => {
-    async function checkLogin() {
+    const checkLogin = async () => {
+      console.log('useEffect: Starting login status check.');
       try {
-        const res = await fetch('http://localhost:5550/api/user', {credentials: 'include'});
+        const res = await fetch('http://localhost:5550/api/user', { credentials: 'include' });
+        console.log('API call to /api/user finished with status:', res.status);
         if (res.ok) {
           const data = await res.json();
+          console.log('User is logged in. User info:', data);
           setIsLoggedIn(true);
           setCredits(data.credits);
         } else {
-          // 未登录，重定向到登录页
+          console.log('User is not logged in. Status:', res.status, 'Redirecting to login page.');
           setIsLoggedIn(false);
           router.push('/login');
         }
       } catch (err) {
-        console.error('Fetch user info error:', err);
+        console.error('Fetch user info error during useEffect:', err);
         setIsLoggedIn(false);
         router.push('/login');
       }
-    }
+    };
     checkLogin();
   }, [router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('handleSubmit: Form submission started.');
     setLoading(true);
     setError(null);
     setImageUrl(null);
 
     if (!answer) {
+      console.log('Validation failed: Answer is empty.');
       setError('请输入一个谜底词语。');
       setLoading(false);
       return;
     }
 
+    console.log('Answer to be submitted:', answer);
     try {
       const response = await fetch('http://localhost:5550/api/generate_meme', {
         method: 'POST',
@@ -58,39 +64,52 @@ export default function HomePage() {
         credentials: 'include'
       });
 
+      console.log('API call to /api/generate_meme finished with status:', response.status);
+
       if (response.status === 402) {
         const errorData = await response.json();
+        console.error('API Error (402):', errorData.message);
         throw new Error(errorData.message);
       }
       
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('API Error:', errorData.message || 'API 请求失败，请检查后端服务。');
         throw new Error(errorData.message || 'API 请求失败，请检查后端服务。');
       }
 
       const imageBlob = await response.blob();
+      console.log('Image blob received successfully. Blob size:', imageBlob.size, 'bytes.');
       const objectURL = URL.createObjectURL(imageBlob);
       setImageUrl(objectURL);
+      console.log('Image URL created:', objectURL);
 
       // 生成成功后，重新获取用户额度
-      const userRes = await fetch('http://localhost:5550/api/user', {credentials: 'include'});
+      console.log('Generation successful. Fetching updated user credits.');
+      const userRes = await fetch('http://localhost:5550/api/user', { credentials: 'include' });
       if (userRes.ok) {
         const userData = await userRes.json();
         setCredits(userData.credits);
+        console.log('Updated credits fetched successfully. New credits:', userData.credits);
+      } else {
+        console.error('Failed to fetch updated credits. Status:', userRes.status);
       }
 
     } catch (err) {
-      console.error(err);
+      console.error('An error occurred during meme generation:', err);
       setError(err.message);
     } finally {
+      console.log('handleSubmit: Function finished. Setting loading to false.');
       setLoading(false);
     }
   };
   
-  // 只有在登录后才渲染主界面
   if (!isLoggedIn) {
+    console.log('Not logged in, rendering null.');
     return null;
   }
+
+  console.log('Rendering HomePage component. Credits:', credits);
 
   return (
     <div className={styles.container}>
@@ -111,11 +130,14 @@ export default function HomePage() {
             type="text"
             className={styles.input}
             value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
+            onChange={(e) => {
+              setAnswer(e.target.value);
+              console.log('Input value changed:', e.target.value);
+            }}
             placeholder="例如：东施效颦"
-            disabled={loading || credits <= 0}
+            disabled={loading || (credits !== null && credits <= 0)}
           />
-          <button type="submit" className={styles.button} disabled={loading || credits <= 0}>
+          <button type="submit" className={styles.button} disabled={loading || (credits !== null && credits <= 0)}>
             {loading ? '生成中...' : '生成梗图'}
           </button>
         </form>
