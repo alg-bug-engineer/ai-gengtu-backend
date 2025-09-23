@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:14-alpine  # 使用一个轻量且稳定的 PostgreSQL 14 镜像
+    container_name: meme-gen-db
+    restart: always
+    environment:
+      POSTGRES_USER: your_db_user      # 【重要】替换成你的数据库用户名
+      POSTGRES_PASSWORD: your_db_password # 【重要】替换成一个强密码
+      POSTGRES_DB: meme_generator    # 【重要】替换成你的数据库名
+    ports:
+      - "5432:5432" # 将容器的 5432 端口映射到服务器的 5432 端口
+    volumes:
+      - pg_data:/var/lib/postgresql/data # 数据持久化，防止容器删除后数据丢失
+
+volumes:
+  pg_data:

@@ -1,0 +1,63 @@
+1. 用户表 (users)
+存储用户信息、密码和剩余额度。
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,                          -- 用户ID，自增主键
+    username VARCHAR(50) UNIQUE NOT NULL,             -- 用户名，唯一且不能为空
+    email VARCHAR(100) UNIQUE NOT NULL,             -- 邮箱，唯一且不能为空，用于登录或找回密码
+    password_hash VARCHAR(255) NOT NULL,            -- 【安全】加密后的密码哈希，绝不能存明文密码！
+    generation_credits INT NOT NULL DEFAULT 5,        -- 剩余生成额度，默认为5
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),  -- 账户创建时间
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()   -- 账户最后更新时间
+);
+
+COMMENT ON TABLE users IS '用户表';
+COMMENT ON COLUMN users.password_hash IS '存储使用 bcrypt 或 argon2 加密后的密码';
+
+2. 邀请码表 (invitation_codes)
+管理邀请码的生成、使用状态和有效期。
+CREATE TABLE invitation_codes (
+    id SERIAL PRIMARY KEY,
+    code VARCHAR(20) UNIQUE NOT NULL,                 -- 邀请码字符串，唯一
+    expires_at TIMESTAMPTZ,                           -- 过期时间，如果为 NULL 则永不过期
+    is_used BOOLEAN NOT NULL DEFAULT FALSE,           -- 是否已被使用
+    used_by_user_id INT,                              -- 使用该邀请码的用户ID，外键关联 users 表
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    -- 添加外键约束，当用户被删除时，这里的记录一同被处理（设置为NULL）
+    CONSTRAINT fk_used_by_user
+        FOREIGN KEY(used_by_user_id)
+        REFERENCES users(id)
+        ON DELETE SET NULL
+);
+
+-- 为常用的查询字段创建索引，可以提升查询性能
+CREATE INDEX idx_invitation_codes_code ON invitation_codes(code);
+
+COMMENT ON TABLE invitation_codes IS '邀请码表';
+COMMENT ON COLUMN invitation_codes.used_by_user_id IS '关联到使用此码注册的用户ID';
+
+3. 生成记录表 (generations)
+记录每一次用户生成梗图的历史，方便用户回顾，也便于我们进行数据分析。
+CREATE TABLE generations (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,                             -- 创建者ID，外键关联 users 表
+    riddle_answer TEXT,                               -- 谜底（用户输入的词）
+    prompt_text TEXT,                                 -- 由 Gemini 生成的完整谜面提示词
+    image_url VARCHAR(512),                           -- 最终生成的图片URL
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',    -- 生成状态 (e.g., pending, completed, failed)
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    -- 添加外键约束，确保每条记录都关联一个有效的用户
+    CONSTRAINT fk_user
+        FOREIGN KEY(user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE -- 如果用户被删除，他的生成记录也一并删除
+);
+
+CREATE INDEX idx_generations_user_id ON generations(user_id);
+
+COMMENT ON TABLE generations IS '用户生成图片历史记录表';
+COMMENT ON COLUMN generations.prompt_text IS '由AI生成的，用于图片生成的完整Prompt';
+
+进入 docker的命令：
+docker exec -it meme-gen-db psql -U your_db_user -d meme_generator
