@@ -61,3 +61,4 @@ COMMENT ON COLUMN generations.prompt_text IS '由AI生成的，用于图片生�
 
 进入 docker的命令：
 docker exec -it meme-gen-db psql -U your_db_user -d meme_generator
+docker exec -it meme-gen-db psql -U your_db_user -d meme_generator -c "DELETE FROM alembic_version;"
