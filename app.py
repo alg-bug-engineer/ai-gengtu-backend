@@ -23,6 +23,11 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql://your_db_user:your_db_password@localhost:5432/meme_generator')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a_very_secret_key_for_session')
+app.config.update(
+    SESSION_COOKIE_SAMESITE='None',
+    SESSION_COOKIE_SECURE=False, # 在本地开发时可以设置为 False
+    SESSION_COOKIE_DOMAIN='localhost' # 设置为你的后端域名或IP
+)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 # 初始化扩展
@@ -32,6 +37,7 @@ login_manager.init_app(app)
 migrate = Migrate(app, db) # <-- 新增这行，关联应用和数据库
 CORS(app, supports_credentials=True) # 启用 CORS，允许跨域携带凭证
 CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000", "supports_credentials": True}})
+
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -204,4 +210,4 @@ if __name__ == '__main__':
     # 在应用启动时创建数据库表（仅在开发环境中）
     with app.app_context():
         db.create_all()
-    app.run(debug=True, host='0.0.0.0', port=5550)
+    app.run(debug=False, host='localhost', port=5550)
