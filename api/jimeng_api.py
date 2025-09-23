@@ -1,301 +1,414 @@
-# 导入所需库
-import json  # 用于JSON数据的序列化和反序列化
-import sys  # 用于系统相关操作，如程序退出
-import base64  # 用于Base64编码和解码
-import datetime  # 用于处理日期和时间
-import hashlib  # 用于哈希算法
-import hmac  # 用于HMAC加密
-import requests  # 用于发送HTTP请求
-import os  # 用于文件系统操作
-from io import BytesIO  # 用于处理字节流
+# -*- coding: utf-8 -*-
+"""
+即梦生图API调用工具
+功能：通过火山引擎即梦生图API生成图片，并将Base64结果转换为本地图片文件
+日志输出：/Users/zhangqilai/ai-gengtu/logs（按日期分文件）
+环境依赖：需在.env文件中配置 access_key、secret_key（可选配置default_dir）
+"""
+
+# ------------------------------
+# 1. 导入依赖库（按：标准库 → 第三方库 顺序）
+# ------------------------------
+import json
+import sys
+import base64
+import datetime
+import hashlib
+import hmac
 from PIL import Image  # 用于图片处理
+import os
+from typing import Optional  # 类型提示：可选参数
+from io import BytesIO
+
+# 第三方库
+import requests
 from dotenv import load_dotenv
+import logging  # 日志模块
+
+
+# ------------------------------
+# 2. 日志系统初始化（输出到文件+控制台）
+# ------------------------------
+"""初始化日志配置：同时输出到指定文件和控制台"""
+# 日志目录（用户指定路径）
+LOG_DIR = "/Users/zhangqilai/ai-gengtu/logs"
+# 确保日志目录存在（不存在则创建）
+os.makedirs(LOG_DIR, exist_ok=True)
+
+# 日志文件名（按日期命名，如：2024-05-20.log）
+log_file = os.path.join(LOG_DIR, datetime.datetime.now().strftime("%Y-%m-%d") + "_jimeng.log")
+
+# 日志格式（包含：时间、级别、模块行号、消息）
+log_format = "%(asctime)s - %(levelname)s - %(module)s:%(lineno)d - %(message)s"
+
+# 配置日志处理器（文件+控制台）
+logging.basicConfig(
+    level=logging.INFO,  # 日志级别：INFO及以上会被记录
+    format=log_format,
+    handlers=[
+        # 1. 输出到文件（UTF-8编码，避免中文乱码）
+        logging.FileHandler(log_file, encoding="utf-8"),
+        # 2. 输出到控制台
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+
+
+# ------------------------------
+# 3. 全局配置加载（从.env文件读取密钥和路径）
+# ------------------------------
+# 加载.env环境变量
 load_dotenv()
+logging.info("成功加载.env环境变量文件")
 
-# API请求配置参数
-method = 'POST'  # HTTP请求方法
-host = 'visual.volcengineapi.com'  # API主机地址
-region = 'cn-north-1'  # 服务区域
-endpoint = 'https://visual.volcengineapi.com'  # API完整端点
-service = 'cv'  # 服务名称（计算机视觉）
+# API固定配置（火山引擎即梦生图）
+API_CONFIG = {
+    "method": "POST",          # HTTP请求方法
+    "host": "visual.volcengineapi.com",  # API主机
+    "region": "cn-north-1",    # 服务区域
+    "endpoint": "https://visual.volcengineapi.com",  # API完整端点
+    "service": "cv"            # 服务类型（计算机视觉）
+}
 
-# 从.env读取密钥（关键修改）
-access_key = os.getenv("access_key")
-secret_key = os.getenv("secret_key")
-# 从.env读取默认图片路径（可选，更灵活）
-default_dir = os.getenv("default_dir", "/Users/zhangqilai/ai-gengtu/images")  # 第二个参数为默认值
+# 从.env读取密钥（必选，缺失将退出程序）
+ACCESS_KEY = os.getenv("access_key")
+SECRET_KEY = os.getenv("secret_key")
+
+# 从.env读取默认图片保存路径（可选，默认路径为用户指定的默认值）
+DEFAULT_IMAGE_DIR = os.getenv(
+    "default_dir", 
+    "/Users/zhangqilai/ai-gengtu/images"
+)
 
 
-def base64_to_image(base64_str, output_path=None):
+# ------------------------------
+# 4. 工具函数：Base64转图片
+# ------------------------------
+def base64_to_image(base64_str: str, output_path: Optional[str] = None) -> Optional[str]:
     """
-    将base64字符串转换为图片并保存到本地
+    将Base64字符串解码为图片并保存到本地
     
     参数:
-        base64_str: 包含图片数据的base64字符串
-        output_path: 可选参数，图片保存路径。如果为None，
-                    则默认保存到default_dir文件夹，命名格式为yyyymmddhhmmss
-                    
+        base64_str: 包含图片数据的Base64字符串（支持带前缀如'data:image/png;base64,'）
+        output_path: 可选，图片保存路径。为None时使用默认目录+时间戳命名
+    
     返回:
-        成功：图片保存路径字符串
-        失败：None
+        Optional[str]: 成功返回图片保存路径；失败返回None
+    
+    异常:
+        捕获所有解码/保存过程中的异常，通过日志记录堆栈信息
     """
+    logging.info("开始处理Base64字符串转图片")
+    
     try:
-        print(f"[INFO] 开始处理base64字符串转换为图片")
+        # 步骤1：移除Base64前缀（如存在）
+        if "base64," in base64_str:
+            logging.debug("检测到Base64前缀，执行切割处理")
+            base64_str = base64_str.split("base64,")[1]
         
-        # 移除可能存在的前缀（如'data:image/png;base64,'）
-        if 'base64,' in base64_str:
-            print(f"[INFO] 检测到base64前缀，进行处理")
-            base64_str = base64_str.split('base64,')[1]
+        # 步骤2：Base64解码为二进制数据
+        logging.debug("开始解码Base64字符串（长度：%d）", len(base64_str))
+        image_bin = base64.b64decode(base64_str)
         
-        # 解码base64字符串为二进制数据
-        print(f"[INFO] 开始解码base64字符串")
-        image_data = base64.b64decode(base64_str)
-        
-        # 将二进制数据转换为PIL Image对象
-        print(f"[INFO] 将二进制数据转换为图片对象")
-        image = Image.open(BytesIO(image_data))
-        
-        # 确定图片保存路径
-        if output_path is None:
-            print(f"[INFO] 未指定保存路径，使用默认配置")
-            # 确保默认文件夹存在，如果不存在则创建
-            os.makedirs(default_dir, exist_ok=True)
-            print(f"[INFO] 确认/创建图片保存目录: {default_dir}")
-            
-            # 获取当前时间并格式化为yyyymmddhhmmss作为文件名
-            timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-            print(f"[INFO] 生成时间戳文件名: {timestamp}")
-            
-            # 获取图片格式（如PNG、JPG等），默认为png
+        # 步骤3：二进制数据转PIL图片对象
+        logging.debug("将二进制数据转换为PIL Image对象")
+        # 将保存操作移入 with 语句中
+        with BytesIO(image_bin) as img_buffer:
+            image = Image.open(img_buffer)
+            # 保留图片原始格式（如PNG/JPG），无格式时默认PNG
             img_format = image.format.lower() if image.format else "png"
-            print(f"[INFO] 检测到图片格式: {img_format}")
+            logging.info("检测到图片格式：%s", img_format)
             
-            # 构建完整保存路径
-            output_path = os.path.join(default_dir, f"{timestamp}.{img_format}")
-        
-        # 保存图片到指定路径
-        print(f"[INFO] 开始保存图片到: {output_path}")
-        image.save(output_path)
-        print(f"[SUCCESS] 图片已成功保存到: {output_path}")
-        return output_path  # 返回实际保存路径，方便后续使用
-        
+            # 步骤4：确定保存路径（未指定则用默认目录+时间戳）
+            if not output_path:
+                logging.debug("未指定保存路径，使用默认配置")
+                # 确保默认图片目录存在
+                os.makedirs(DEFAULT_IMAGE_DIR, exist_ok=True)
+                logging.info("确认/创建默认图片目录：%s", DEFAULT_IMAGE_DIR)
+                
+                # 生成时间戳文件名（避免重复）：20240520143025.png
+                timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+                output_path = os.path.join(DEFAULT_IMAGE_DIR, f"{timestamp}.{img_format}")
+            
+            # 步骤5：保存图片到本地
+            logging.info("开始保存图片到：%s", output_path)
+            image.save(output_path)
+            logging.info("图片保存成功，路径：%s", output_path)
+            return output_path
+    
     except Exception as e:
-        print(f"[ERROR] 图片转换/保存失败: {str(e)}")
+        # 记录异常详情（含堆栈），方便排查问题
+        logging.error("Base64转图片失败：%s", str(e), exc_info=True)
         return None
 
 
-def sign(key, msg):
+
+# ------------------------------
+# 5. 工具函数：V4签名相关（火山引擎API认证）
+# ------------------------------
+def hmac_sha256_sign(key: bytes, msg: str) -> bytes:
     """
-    使用HMAC-SHA256算法进行签名
+    单次HMAC-SHA256签名（V4签名的基础步骤）
     
     参数:
         key: 签名密钥（字节类型）
-        msg: 待签名的消息（字符串）
-        
-    返回:
-        签名结果（字节类型）
-    """
-    return hmac.new(key, msg.encode('utf-8'), hashlib.sha256).digest()
-
-
-def getSignatureKey(key, dateStamp, regionName, serviceName):
-    """
-    生成V4签名所需的签名密钥
+        msg: 待签名的字符串（需UTF-8编码）
     
-    签名密钥生成流程：kSecret -> kDate -> kRegion -> kService -> kSigning
+    返回:
+        bytes: 签名后的字节数据
+    """
+    return hmac.new(key, msg.encode("utf-8"), hashlib.sha256).digest()
+
+
+def generate_v4_sign_key(secret_key: str, date_stamp: str, region: str, service: str) -> bytes:
+    """
+    生成火山引擎V4签名所需的最终签名密钥（分层推导）
+    
+    推导流程：kSecret → kDate → kRegion → kService → kSigning
+    每层均使用HMAC-SHA256签名
     
     参数:
-        key: 原始密钥（secret_key）
-        dateStamp: 日期戳（格式：YYYYMMDD）
-        regionName: 区域名称
-        serviceName: 服务名称
-        
+        secret_key: 原始SecretKey（从.env读取）
+        date_stamp: 日期戳（格式：YYYYMMDD，如20240520）
+        region: 服务区域（如cn-north-1）
+        service: 服务名称（如cv）
+    
     返回:
-        最终的签名密钥（字节类型）
+        bytes: 最终用于请求签名的密钥（kSigning）
     """
-    print(f"[INFO] 开始生成签名密钥，日期: {dateStamp}, 区域: {regionName}, 服务: {serviceName}")
-    kDate = sign(key.encode('utf-8'), dateStamp)
-    kRegion = sign(kDate, regionName)
-    kService = sign(kRegion, serviceName)
-    kSigning = sign(kService, 'request')
-    return kSigning
+    logging.info("开始生成V4签名密钥，参数：日期=%s，区域=%s，服务=%s", date_stamp, region, service)
+    
+    # 分层推导签名密钥
+    k_date = hmac_sha256_sign(key=secret_key.encode("utf-8"), msg=date_stamp)
+    k_region = hmac_sha256_sign(key=k_date, msg=region)
+    k_service = hmac_sha256_sign(key=k_region, msg=service)
+    k_signing = hmac_sha256_sign(key=k_service, msg="request")
+    
+    logging.debug("V4签名密钥生成完成（kSigning长度：%d字节）", len(k_signing))
+    return k_signing
 
 
-def formatQuery(parameters):
+def format_query_params(params: dict) -> str:
     """
-    格式化查询参数，按字母顺序排序并拼接为key=value&key=value形式
+    格式化查询参数（V4签名要求：按字母排序+key=value&key=value格式）
     
     参数:
-        parameters: 字典类型的查询参数
-        
+        params: 原始查询参数字典（如{"Action":"CVProcess", "Version":"2022-08-31"}）
+    
     返回:
-        格式化后的查询参数字符串
+        str: 格式化后的查询参数字符串
     """
-    print(f"[INFO] 开始格式化查询参数: {parameters}")
-    request_parameters_init = ''
-    # 按字母顺序排序参数，确保签名一致性
-    for key in sorted(parameters):
-        request_parameters_init += f"{key}={parameters[key]}&"
-    # 移除最后一个多余的&符号
-    request_parameters = request_parameters_init[:-1]
-    print(f"[INFO] 格式化后的查询参数: {request_parameters}")
-    return request_parameters
+    logging.debug("开始格式化查询参数，原始参数：%s", params)
+    
+    # 1. 按参数名字母升序排序
+    sorted_params = sorted(params.items(), key=lambda x: x[0])
+    # 2. 拼接为key=value格式，用&连接
+    formatted = "&".join([f"{k}={v}" for k, v in sorted_params])
+    
+    logging.debug("格式化后查询参数：%s", formatted)
+    return formatted
 
 
-def signV4Request(access_key, secret_key, service, req_query, req_body):
+# ------------------------------
+# 6. 核心函数：V4签名+API请求
+# ------------------------------
+def send_v4_signed_request(
+    access_key: str,
+    secret_key: str,
+    query_params: dict,
+    request_body: dict
+) -> Optional[str]:
     """
-    生成V4签名并发送HTTP请求
+    生成V4签名并发送API请求，最终返回图片保存路径
     
     参数:
-        access_key: 访问密钥ID
-        secret_key: 秘密访问密钥
-        service: 服务名称
-        req_query: 格式化后的查询参数字符串
-        req_body: 请求体（JSON字符串）
-        
+        access_key: 火山引擎AccessKey
+        secret_key: 火山引擎SecretKey
+        query_params: API查询参数（如Action、Version）
+        request_body: API请求体（如prompt、req_key）
+    
     返回:
-        图片保存路径（成功）或None（失败）
+        Optional[str]: 成功返回图片路径；失败返回None
     """
-    # 检查凭证是否存在
-    if access_key is None or secret_key is None:
-        print(f"[ERROR] 缺少访问凭证（access_key或secret_key）")
-        sys.exit(1)
-
-    # 获取当前UTC时间，用于签名和请求头
-    t = datetime.datetime.utcnow()
-    current_date = t.strftime('%Y%m%dT%H%M%SZ')  # 带时间的UTC时间戳
-    datestamp = t.strftime('%Y%m%d')  # 仅日期部分，用于凭证范围
-    print(f"[INFO] 当前UTC时间: {current_date}")
-
-    # 构建规范请求（Canonical Request）的各个部分
-    canonical_uri = '/'  # 请求URI，默认为/
-    algorithm = 'HMAC-SHA256'  # 签名算法
-    canonical_querystring = req_query  # 规范查询字符串
-    signed_headers = 'content-type;host;x-content-sha256;x-date'  # 需要签名的请求头
+    # 前置检查：密钥是否缺失
+    if not (access_key and secret_key):
+        logging.critical("AccessKey或SecretKey缺失，无法进行V4签名，程序退出")
+        sys.exit(1)  # 密钥缺失为致命错误，退出程序
     
-    # 计算请求体的SHA256哈希
-    payload_hash = hashlib.sha256(req_body.encode('utf-8')).hexdigest()
-    print(f"[INFO] 请求体哈希值: {payload_hash}")
+    # 步骤1：获取当前UTC时间（V4签名要求）
+    utc_now = datetime.datetime.utcnow()
+    current_date = utc_now.strftime("%Y%m%dT%H%M%SZ")  # 带时间的UTC戳（如20240520T063025Z）
+    date_stamp = utc_now.strftime("%Y%m%d")            # 仅日期戳（如20240520）
+    logging.info("当前UTC时间：%s，日期戳：%s", current_date, date_stamp)
     
-    content_type = 'application/json'  # 请求内容类型
+    # 步骤2：构建规范请求（Canonical Request）
+    # 2.1 固定参数
+    canonical_uri = "/"  # API请求URI（即梦生图固定为/）
+    algorithm = "HMAC-SHA256"  # 签名算法
+    signed_headers = "content-type;host;x-content-sha256;x-date"  # 需签名的请求头
+    content_type = "application/json"  # 请求体格式
     
-    # 构建规范请求头
+    # 2.2 格式化查询参数和请求体
+    canonical_query = format_query_params(query_params)
+    request_body_str = json.dumps(request_body, ensure_ascii=False)  # 转为JSON字符串
+    
+    # 2.3 计算请求体的SHA256哈希（V4签名要求）
+    payload_hash = hashlib.sha256(request_body_str.encode("utf-8")).hexdigest()
+    logging.debug("请求体SHA256哈希：%s", payload_hash)
+    
+    # 2.4 构建规范请求头（小写key+值，末尾换行）
     canonical_headers = (
-        f'content-type:{content_type}\n'
-        f'host:{host}\n'
-        f'x-content-sha256:{payload_hash}\n'
-        f'x-date:{current_date}\n'
+        f"content-type:{content_type}\n"
+        f"host:{API_CONFIG['host']}\n"
+        f"x-content-sha256:{payload_hash}\n"
+        f"x-date:{current_date}\n"
     )
-    canonical_headers = canonical_headers.replace('\\n', ' ')
-    print(f"[INFO] 规范请求头: {canonical_headers}")
+    logging.debug("规范请求头：%s", canonical_headers.strip())  # strip()去除末尾换行，避免日志冗余
     
-    # 拼接完整的规范请求
+    # 2.5 拼接完整规范请求
     canonical_request = (
-        f"{method}\n"
+        f"{API_CONFIG['method']}\n"
         f"{canonical_uri}\n"
-        f"{canonical_querystring}\n"
+        f"{canonical_query}\n"
         f"{canonical_headers}\n"
         f"{signed_headers}\n"
         f"{payload_hash}"
     )
-    print(f"[INFO] 规范请求构建完成")
-
-    # 构建待签名字符串
-    credential_scope = f"{datestamp}/{region}/{service}/request"  # 凭证范围
+    logging.debug("规范请求构建完成（长度：%d字节）", len(canonical_request))
+    
+    # 步骤3：构建待签名字符串（String to Sign）
+    credential_scope = f"{date_stamp}/{API_CONFIG['region']}/{API_CONFIG['service']}/request"
     string_to_sign = (
         f"{algorithm}\n"
         f"{current_date}\n"
         f"{credential_scope}\n"
         f"{hashlib.sha256(canonical_request.encode('utf-8')).hexdigest()}"
     )
-    print(f"[INFO] 待签名字符串构建完成，凭证范围: {credential_scope}")
-
-    # 生成签名密钥并计算签名
-    signing_key = getSignatureKey(secret_key, datestamp, region, service)
-    signature = hmac.new(signing_key, string_to_sign.encode('utf-8'), hashlib.sha256).hexdigest()
-    print(f"[INFO] 签名计算完成: {signature}")
-
-    # 构建Authorization请求头
-    authorization_header = (
+    logging.debug("待签名字符串构建完成，凭证范围：%s", credential_scope)
+    
+    # 步骤4：生成签名密钥并计算最终签名
+    signing_key = generate_v4_sign_key(secret_key, date_stamp, API_CONFIG['region'], API_CONFIG['service'])
+    signature = hmac.new(signing_key, string_to_sign.encode("utf-8"), hashlib.sha256).hexdigest()
+    logging.info("V4签名计算完成：%s", signature)
+    
+    # 步骤5：构建Authorization请求头
+    auth_header = (
         f"{algorithm} "
         f"Credential={access_key}/{credential_scope}, "
         f"SignedHeaders={signed_headers}, "
         f"Signature={signature}"
     )
     
-    # 构建完整请求头
-    headers = {
-        'X-Date': current_date,
-        'Authorization': authorization_header,
-        'X-Content-Sha256': payload_hash,
-        'Content-Type': content_type
+    # 步骤6：构建完整请求头
+    request_headers = {
+        "X-Date": current_date,
+        "Authorization": auth_header,
+        "X-Content-Sha256": payload_hash,
+        "Content-Type": content_type
     }
-    print(f"[INFO] 请求头构建完成")
-
-    # 发送请求
-    request_url = f"{endpoint}?{canonical_querystring}"
-    print(f'\n[INFO] 开始发送请求++++++++++++++++++++++++++++++++++++')
-    print(f'[INFO] 请求URL: {request_url}')
+    logging.debug("请求头构建完成：%s", request_headers)
+    
+    # 步骤7：发送POST请求
+    request_url = f"{API_CONFIG['endpoint']}?{canonical_query}"
+    logging.info("开始发送API请求，URL：%s", request_url)
+    logging.debug("请求体：%s", request_body_str)
     
     try:
-        # 发送POST请求
-        print(f"[INFO] 发送POST请求，请求体: {req_body}")
-        r = requests.post(request_url, headers=headers, data=req_body)
-    except Exception as err:
-        print(f'[ERROR] 请求发送失败: {err}')
-        raise  # 抛出异常，让上层处理
-    else:
-        print(f'\n[INFO] 收到响应++++++++++++++++++++++++++++++++++++')
-        print(f'[INFO] 响应状态码: {r.status_code}')
+        response = requests.post(
+            url=request_url,
+            headers=request_headers,
+            data=request_body_str.encode("utf-8"),  # 显式指定UTF-8编码，避免中文乱码
+            timeout=30  # 超时时间30秒，防止长期阻塞
+        )
+        # 检查HTTP状态码（200为成功）
+        response.raise_for_status()
+        logging.info("API请求成功，HTTP状态码：%d", response.status_code)
+    
+    except requests.exceptions.RequestException as e:
+        # 捕获所有HTTP请求异常（超时、连接失败、4xx/5xx等）
+        logging.error("API请求失败：%s", str(e), exc_info=True)
+        return None
+    
+    # 步骤8：解析响应并提取Base64图片
+    try:
+        response_json = response.json()
+        logging.debug("API响应内容：%s", json.dumps(response_json, indent=2, ensure_ascii=False))
         
-        # 处理响应
-        try:
-            val = r.json()
-            print(f"[INFO] 响应内容: {json.dumps(val, indent=2)}")
-            
-            # 提取base64图片数据并转换保存
-            api_response_base64 = val['data']['binary_data_base64'][0]
-            print(f"[INFO] 提取到图片base64数据，长度: {len(api_response_base64)}")
-            return base64_to_image(api_response_base64)
-            
-        except KeyError as e:
-            print(f"[ERROR] 响应数据格式错误，缺少字段: {e}")
-            return None
-        except json.JSONDecodeError:
-            print(f"[ERROR] 响应内容不是有效的JSON格式: {r.text}")
-            return None
+        # 提取即梦生图返回的Base64数据（响应结构：data → binary_data_base64[0]）
+        base64_image = response_json["data"]["binary_data_base64"][0]
+        logging.info("成功提取Base64图片数据（长度：%d字节）", len(base64_image))
+        
+        # 调用工具函数将Base64转为本地图片
+        return base64_to_image(base64_str=base64_image)
+    
+    except KeyError as e:
+        logging.error("API响应结构异常，缺失字段：%s", str(e))
+        return None
+    except json.JSONDecodeError:
+        logging.error("API响应不是合法JSON格式，响应内容：%s", response.text)
+        return None
 
 
-def jimeng_generate_api(prompt):
+# ------------------------------
+# 7. 业务函数：即梦生图API调用入口
+# ------------------------------
+def jimeng_generate_api(prompt: str) -> Optional[str]:
     """
-    调用火山引擎即梦生图API生成图片
+    即梦生图API调用入口：输入提示词，返回图片保存路径
     
     参数:
-        prompt: 生成图片的提示词（文本描述）
+        prompt: 图片生成提示词（中文，需符合即梦生图格式要求）
+    
+    返回:
+        Optional[str]: 成功返回图片路径；失败返回None
     """
-    print(f"[INFO] 开始调用即梦生图API，提示词: {prompt}")
+    logging.info("=" * 50)
+    logging.info("开始调用即梦生图API，提示词：%s", prompt)
+    logging.info("=" * 50)
     
-    # 构建请求查询参数（按API文档要求）
+    # 1. 构建API查询参数（即梦生图固定参数）
     query_params = {
-        'Action': 'CVProcess',  # API操作名称
-        'Version': '2022-08-31',  # API版本
+        "Action": "CVProcess",    # API动作名
+        "Version": "2022-08-31"   # API版本
     }
-    formatted_query = formatQuery(query_params)
-
-    # 构建请求体（按API文档要求）
-    body_params = {
-        "req_key": "jimeng_t2i_v40",  # 指定生图模型
-        "prompt": prompt  # 图片生成提示词
-    }
-    formatted_body = json.dumps(body_params)
-    print(f"[INFO] 构建请求体: {formatted_body}")
     
-    # 调用签名并发送请求
-    signV4Request(access_key, secret_key, service, formatted_query, formatted_body)
+    # 2. 构建API请求体（核心参数：提示词、模型版本）
+    request_body = {
+        "req_key": "jimeng_t2i_v40",  # 即梦生图V4.0模型
+        "prompt": prompt              # 用户输入的提示词
+    }
+    
+    # 3. 发送签名请求并返回图片路径
+    try:
+        image_path = send_v4_signed_request(
+            access_key=ACCESS_KEY,
+            secret_key=SECRET_KEY,
+            query_params=query_params,
+            request_body=request_body
+        )
+        
+        if image_path:
+            logging.info("即梦生图API调用完成，图片保存路径：%s", image_path)
+            return image_path
+        else:
+            logging.error("即梦生图API调用失败，未获取到图片路径")
+            return None
+    
+    except Exception as e:
+        logging.error("即梦生图API调用过程中发生未知错误：%s", str(e), exc_info=True)
+        return None
 
 
-if __name__ == "__main__":
-    """程序入口：调用即梦生图API生成"一个可爱的小狗"的图片"""
-    print(f"[INFO] 程序启动，开始生成图片...")
-    jimeng_generate_api("一个可爱的小狗")
-    print(f"[INFO] 程序执行完成")
+# ------------------------------
+# 8. 主程序入口（测试用）
+# ------------------------------
+if __name__ == "__main__":    
+    # 测试：调用即梦生图API生成图片
+    test_prompt = "一只可爱的柯基犬在绿色草地上玩耍，背景是蓝天白云，阳光明媚，高清照片质感"
+    result_path = jimeng_generate_api(prompt=test_prompt)
+    
+    # 输出测试结果
+    if result_path:
+        logging.info("测试成功！生成图片路径：%s", result_path)
+    else:
+        logging.error("测试失败！未生成图片")
