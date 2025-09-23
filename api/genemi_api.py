@@ -22,7 +22,7 @@ load_dotenv()
 # ------------------------------
 """初始化日志配置，同时输出到文件和控制台"""
 # 日志目录（可根据需要修改）
-LOG_DIR = "/Users/zhangqilai/ai-gengtu/logs"
+LOG_DIR = "/root/ai-gengtu-backend/logs"
 os.makedirs(LOG_DIR, exist_ok=True)  # 确保日志目录存在
 
 # 日志文件名（按日期命名）
@@ -48,7 +48,7 @@ logging.info("日志系统初始化完成，日志文件路径：%s", log_filepa
 # 全局配置与初始化
 # ------------------------------
 logging.info("已加载.env环境变量文件")
-client = genai.Client()
+client = genai.Client(api_key='AIzaSyAcmmVi1q0PHh89w12LJ8bQr5D-PHBkpl0')
 
 # 配置Gemini API
 try:

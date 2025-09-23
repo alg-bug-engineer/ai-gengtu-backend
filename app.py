@@ -11,6 +11,9 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from flask_cors import CORS
 from bcrypt import hashpw, gensalt, checkpw
 from flask_migrate import Migrate
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # 将 api 目录添加到系统路径
 sys.path.append(os.path.join(os.path.dirname(__file__), 'api'))
@@ -20,13 +23,13 @@ from api.jimeng_api import jimeng_generate_api
 # 应用配置
 app = Flask(__name__)
 # 使用环境变量配置数据库，确保生产环境安全
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql://your_db_user:your_db_password@localhost:5432/meme_generator')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql://your_db_user:your_db_password@localhost:5433/meme_generator')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a_very_secret_key_for_session')
 app.config.update(
     SESSION_COOKIE_SAMESITE='Lax',
     # SESSION_COOKIE_SECURE=False, # 在本地开发时可以设置为 False
-    SESSION_COOKIE_DOMAIN='localhost' # 设置为你的后端域名或IP
+    SESSION_COOKIE_DOMAIN='8.149.232.39' # 设置为你的后端域名或IP
 )
 app.config['CORS_HEADERS'] = 'Content-Type'
 
@@ -35,8 +38,7 @@ db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 migrate = Migrate(app, db)
-CORS(app, supports_credentials=True)
-CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000", "supports_credentials": True}})
+CORS(app, resources={r"/api/*": {"origins": ["http://8.149.232.39:4000", "http://127.0.0.1:4000"], "supports_credentials": True}})
 
 
 # 配置日志
@@ -256,4 +258,4 @@ if __name__ == '__main__':
         logging.info("Creating database tables...")
         db.create_all()
         logging.info("Database tables created successfully.")
-    app.run(debug=False, host='localhost', port=5550)
+    app.run(debug=False, host='0.0.0.0', port=5550)
