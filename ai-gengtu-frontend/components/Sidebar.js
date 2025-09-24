@@ -35,6 +35,7 @@ export default function Sidebar() {
         }
       } catch (err) {
         console.error('Failed to fetch history:', err);
+        // 这里不进行重定向，由 Layout 组件统一处理未登录情况
       }
     };
     fetchHistory();

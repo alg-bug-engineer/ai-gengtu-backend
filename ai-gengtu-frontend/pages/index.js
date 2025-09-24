@@ -17,7 +17,7 @@ const FeatureCard = ({ title, description, link, icon }) => (
 export default function FeaturesPage() {
   const router = useRouter();
 
-  // 检查登录状态的逻辑现在由 Layout 和 Sidebar 处理
+  // 登录检查和历史记录获取已移至 Sidebar
   // 这里只负责页面内容的展示
   
   return (

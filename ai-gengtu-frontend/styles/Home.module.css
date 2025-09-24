@@ -35,6 +35,7 @@
   border-radius: 8px;
   color: var(--foreground);
   transition: background-color 0.2s;
+  font-weight: 500;
 }
 
 .featureLink:hover {
@@ -56,6 +57,7 @@
   border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.2s;
+  font-weight: 500;
 }
 
 .logoutButton:hover {
@@ -167,6 +169,10 @@
   align-items: center;
   width: 100%;
   max-width: 400px;
+  background: var(--sidebar-bg); /* 调整表单背景色以增强层次感 */
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
 .input {
