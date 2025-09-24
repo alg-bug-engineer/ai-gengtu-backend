@@ -31,7 +31,7 @@ import logging  # 日志模块
 # ------------------------------
 """初始化日志配置：同时输出到指定文件和控制台"""
 # 日志目录（用户指定路径）
-LOG_DIR = "/Users/zhangqilai/ai-gengtu/logs"
+LOG_DIR = "/root/ai-gengtu-backend/logs"
 # 确保日志目录存在（不存在则创建）
 os.makedirs(LOG_DIR, exist_ok=True)
 
@@ -77,7 +77,7 @@ SECRET_KEY = os.getenv("secret_key")
 # 从.env读取默认图片保存路径（可选，默认路径为用户指定的默认值）
 DEFAULT_IMAGE_DIR = os.getenv(
     "default_dir", 
-    "/Users/zhangqilai/ai-gengtu/images"
+    "/root/ai-gengtu-backend/images"
 )
 
 
@@ -375,7 +375,9 @@ def jimeng_generate_api(prompt: str) -> Optional[str]:
     # 2. 构建API请求体（核心参数：提示词、模型版本）
     request_body = {
         "req_key": "jimeng_t2i_v40",  # 即梦生图V4.0模型
-        "prompt": prompt              # 用户输入的提示词
+        "prompt": prompt,             # 用户输入的提示词
+        "width": 1024,
+        "height": 1024
     }
     
     # 3. 发送签名请求并返回图片路径

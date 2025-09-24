@@ -3,6 +3,7 @@ import os
 import sys
 import re
 import logging
+import requests  # 新增导入 requests 库
 from datetime import datetime, timezone
 
 from flask import Flask, request, jsonify, session, send_file
@@ -11,32 +12,37 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from flask_cors import CORS
 from bcrypt import hashpw, gensalt, checkpw
 from flask_migrate import Migrate
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # 将 api 目录添加到系统路径
 sys.path.append(os.path.join(os.path.dirname(__file__), 'api'))
-from api.genemi_api import genemi_generate_api
+# 移除 genemi_api 导入，因为它将不再被直接调用
 from api.jimeng_api import jimeng_generate_api
 
 # 应用配置
 app = Flask(__name__)
-# 使用环境变量配置数据库，确保生产环境安全
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql://your_db_user:your_db_password@localhost:5432/meme_generator')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql://your_db_user:your_db_password@localhost:5433/meme_generator')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a_very_secret_key_for_session')
 app.config.update(
     SESSION_COOKIE_SAMESITE='Lax',
-    # SESSION_COOKIE_SECURE=False, # 在本地开发时可以设置为 False
-    SESSION_COOKIE_DOMAIN='localhost' # 设置为你的后端域名或IP
 )
 app.config['CORS_HEADERS'] = 'Content-Type'
+
+# 从环境变量中获取新加坡服务的URL
+SINGAPORE_GEMINI_API_URL = os.environ.get('SINGAPORE_GEMINI_API_URL')
+if not SINGAPORE_GEMINI_API_URL:
+    logging.critical("SINGAPORE_GEMINI_API_URL is not set in environment variables!")
+    sys.exit(1)
 
 # 初始化扩展
 db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 migrate = Migrate(app, db)
-CORS(app, supports_credentials=True)
-CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000", "supports_credentials": True}})
+CORS(app, resources={r"/api/*": {"origins": ["http://8.149.232.39:4000", "http://127.0.0.1:4000"], "supports_credentials": True}})
 
 
 # 配置日志
@@ -203,15 +209,21 @@ def generate_meme():
     logging.info(f"New generation record created with ID: {new_generation.id}")
 
     try:
-        # 1. 调用 genemi_api 生成提示词
-        logging.info("Step 1: Calling genemi_api to generate prompt.")
-        gemini_response = genemi_generate_api(answer)
-        if not gemini_response:
-            raise ValueError("Gemini API returned an empty response.")
+        # 1. 调用部署在新加坡的 Gemini API 代理服务
+        logging.info("Step 1: Calling remote Gemini API proxy.")
+        # 向新加坡服务发送请求，获取提示词
+        gemini_response = requests.post(SINGAPORE_GEMINI_API_URL, json={'answer': answer})
+        gemini_response.raise_for_status() # 检查HTTP响应状态
         
-        matches = re.findall(PROMPT_PATTERN, gemini_response, re.DOTALL)
+        gemini_data = gemini_response.json()
+        raw_prompt_text = gemini_data.get('prompt')
+
+        if not raw_prompt_text:
+            raise ValueError("Gemini API proxy returned an empty response.")
+        
+        matches = re.findall(PROMPT_PATTERN, raw_prompt_text, re.DOTALL)
         if not matches or len(matches) < 2:
-            logging.error(f"Failed to parse Gemini response. Response was: {gemini_response}")
+            logging.error(f"Failed to parse Gemini response. Response was: {raw_prompt_text}")
             raise ValueError("Gemini 响应格式不正确，无法解析出提示词。")
         chinese_prompt = matches[1].strip()
         logging.info("Step 1 complete. Successfully parsed Chinese prompt.")
@@ -228,7 +240,7 @@ def generate_meme():
         # 3. 成功后，更新数据库记录和用户额度
         logging.info(f"Step 3: Updating user credits and generation record for ID: {new_generation.id}")
         current_user.generation_credits -= 1
-        new_generation.prompt_text = gemini_response # 存储完整提示词
+        new_generation.prompt_text = raw_prompt_text # 存储完整提示词
         new_generation.image_url = f"/generated_images/{os.path.basename(image_path)}" # 存储相对URL
         new_generation.status = 'completed'
         db.session.commit()
@@ -242,6 +254,12 @@ def generate_meme():
         new_generation.status = 'failed'
         db.session.commit()
         return jsonify({"message": str(ve)}), 500
+    except requests.exceptions.RequestException as ree:
+        logging.error(f"Failed to connect to Singapore Gemini API proxy: {ree}")
+        db.session.rollback()
+        new_generation.status = 'failed'
+        db.session.commit()
+        return jsonify({"message": "无法连接到海外服务，请稍后再试。"}), 500
     except Exception as e:
         logging.error(f"An unexpected error occurred during meme generation: {e}", exc_info=True)
         db.session.rollback()
@@ -256,4 +274,4 @@ if __name__ == '__main__':
         logging.info("Creating database tables...")
         db.create_all()
         logging.info("Database tables created successfully.")
-    app.run(debug=False, host='localhost', port=5550)
+    app.run(debug=False, host='0.0.0.0', port=5550)

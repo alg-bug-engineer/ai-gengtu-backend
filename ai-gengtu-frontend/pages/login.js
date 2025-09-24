@@ -19,7 +19,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:5550/api/login', {
+      const response = await fetch('http://8.149.232.39:5550/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
