@@ -1,16 +1,19 @@
+/* alg-bug-engineer/ai-gengtu-backend/ai-gengtu-backend-683d3a06f02d6e71016f8d8e977d1795d9f89ed9/ai-gengtu-frontend/styles/globals.css */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --sidebar-bg: #f9fafb;
-  --link-hover-bg: #f1f5f9;
+  --background: #F7FAFC;
+  --foreground: #1A202C;
+  --sidebar-bg: #FFFFFF;
+  --link-hover-bg: #EDF2F7;
+  --border-color: #E2E8F0;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --sidebar-bg: #1e1e1e;
-    --link-hover-bg: #333;
+    --background: #1A202C;
+    --foreground: #EDF2F7;
+    --sidebar-bg: #2D3748;
+    --link-hover-bg: #4A5568;
+    --border-color: #4A5568;
   }
 }
 
@@ -18,14 +21,14 @@ html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
@@ -37,10 +40,4 @@ body {
 a {
   color: inherit;
   text-decoration: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
 }

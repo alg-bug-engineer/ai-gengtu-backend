@@ -1,262 +1,317 @@
-/* 新的根容器 */
+/* alg-bug-engineer/ai-gengtu-backend/ai-gengtu-backend-683d3a06f02d6e71016f8d8e977d1795d9f89ed9/ai-gengtu-frontend/styles/Home.module.css */
+
+/* --- 1. 宏观布局 --- */
 .appContainer {
   display: flex;
   min-height: 100vh;
+  background-color: var(--background);
 }
 
-/* 左侧边栏 */
+.mainContent {
+  flex-grow: 1;
+  padding: 2.5rem 3rem;
+  overflow-y: auto; /* 内容超出时可滚动 */
+}
+
+/* --- 2. 侧边栏 (Sidebar) --- */
 .sidebar {
-  width: 250px;
+  width: 260px;
+  flex-shrink: 0;
   background-color: var(--sidebar-bg);
-  padding: 2rem 1rem;
-  border-right: 1px solid #e2e8f0;
+  padding: 2rem 1.5rem;
+  border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+  justify-content: space-between;
+  box-shadow: 1px 0 8px rgba(0,0,0,0.05);
 }
 
 .sidebarTitle {
-  font-size: 1.25rem;
-  font-weight: bold;
-  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 2.5rem;
   color: var(--foreground);
 }
 
 .featureNav {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 .featureLink {
   display: flex;
   align-items: center;
-  padding: 0.75rem 1rem;
+  padding: 0.8rem 1rem;
   border-radius: 8px;
-  color: var(--foreground);
-  transition: background-color 0.2s;
+  color: #4A5568; /* 默认链接颜色 */
   font-weight: 500;
+  transition: all 0.2s ease-in-out;
+  text-decoration: none;
 }
 
 .featureLink:hover {
   background-color: var(--link-hover-bg);
+  color: var(--foreground);
 }
+
+.activeLink {
+  background-color: #4299E1; /* 醒目的蓝色 */
+  color: #FFFFFF;
+  font-weight: 600;
+  box-shadow: 0 4px 6px rgba(66, 153, 225, 0.2);
+}
+.activeLink:hover {
+  background-color: #3182CE;
+  color: #FFFFFF;
+}
+
+.disabledLink {
+  color: #A0AEC0;
+  cursor: not-allowed;
+  background-color: transparent;
+}
+.disabledLink:hover {
+  background-color: transparent;
+}
+
 
 .featureIcon {
   width: 20px;
   height: 20px;
-  margin-right: 0.75rem;
+  margin-right: 1rem;
 }
 
 .logoutButton {
-  margin-top: auto; /* 将登出按钮推到底部 */
-  padding: 0.75rem 1rem;
-  background-color: #ef4444;
-  color: white;
-  border: none;
+  margin-top: 2rem;
+  padding: 0.8rem 1rem;
+  background-color: #FEE2E2;
+  color: #DC2626;
+  border: 1px solid #FCA5A5;
   border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.2s;
-  font-weight: 500;
+  transition: all 0.2s;
+  font-weight: 600;
+  text-align: center;
 }
 
 .logoutButton:hover {
-  background-color: #dc2626;
+  background-color: #FECACA;
+  border-color: #F87171;
 }
 
-/* 历史记录容器 */
-.historyContainer {
-  margin-top: 2rem;
-  overflow-y: auto;
-  flex-grow: 1; /* 占据剩余空间 */
-}
-
-.historyTitle {
-  font-size: 1rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
-  color: #64748b;
-}
-
-.historyList {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.historyItem {
-  padding: 0;
-}
-
-.historyLink {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem;
-  border-radius: 6px;
-  transition: background-color 0.2s;
-}
-
-.historyLink:hover {
-  background-color: var(--link-hover-bg);
-}
-
-.historyImageSmall {
-  width: 40px;
-  height: 40px;
-  object-fit: cover;
-  border-radius: 4px;
-}
-
-.noHistoryText {
-  color: #94a3b8;
-  font-size: 0.9rem;
-}
-
-
-/* 右侧主内容区 */
-.mainContent {
-  flex-grow: 1;
-  padding: 2rem;
+/* --- 3. 欢迎页面 (pages/index.js) --- */
+.welcomeContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
-}
-
-.memeGeneratorPage {
-  width: 100%;
-  max-width: 600px;
-}
-
-
-/* 现有样式保持不变，但要确保兼容新的布局 */
-.container {
-  /* 移除之前的 flex 和 padding 样式，由 mainContent 和 memeGeneratorPage 接管 */
-  min-height: auto;
-  padding: 0;
-}
-
-.main {
-  /* 移除之前的 flex 和 padding 样式 */
-  padding: 0;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
   justify-content: center;
-  align-items: center;
-}
-
-/* 现有样式保持不变 */
-.title {
-  margin: 0;
-  line-height: 1.15;
-  font-size: 4rem;
+  height: 100%;
   text-align: center;
 }
 
-.description {
-  margin: 1rem 0;
-  font-size: 1.5rem;
-  line-height: 1.5;
+.welcomeTitle {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: var(--foreground);
+}
+
+.welcomeText {
+  font-size: 1.25rem;
+  color: #718096;
+  margin-top: 1rem;
+}
+
+/* --- 4. 梗图生成器页面 (pages/meme_generator.js) --- */
+.pageContainer {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1rem;
+}
+
+.pageTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.creditsDisplay {
+  font-size: 1.1rem;
+  color: #4A5568;
+  background-color: #EBF8FF;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  border: 1px solid #BEE3F8;
+}
+
+.creditsDisplay strong {
+  color: #2B6CB0;
+  font-weight: 700;
+}
+
+.generatorArea {
+  background-color: var(--sidebar-bg);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .form {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
   align-items: center;
-  width: 100%;
-  max-width: 400px;
-  background: var(--sidebar-bg); /* 调整表单背景色以增强层次感 */
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
-.input {
+.input, .select {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.8rem 1rem;
   font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  margin-bottom: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--background);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.input:focus, .select:focus {
+  outline: none;
+  border-color: #4299E1;
+  box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
 }
 
 .button {
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
+  grid-column: 1 / -1; /* 按钮横跨所有列 */
+  padding: 0.9rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
   color: white;
-  background-color: #0070f3;
+  background-color: #3182CE;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.3s;
 }
 
+.button:hover {
+  background-color: #2B6CB0;
+}
+
 .button:disabled {
-  background-color: #ccc;
+  background-color: #A0AEC0;
   cursor: not-allowed;
 }
 
-.status {
-  margin-top: 1rem;
-  font-style: italic;
-  color: #555;
+.statusText, .errorText {
+  text-align: center;
+  font-size: 1rem;
+  padding: 0.8rem;
+  border-radius: 8px;
+  margin-top: 1.5rem;
 }
 
-.error {
-  margin-top: 1rem;
-  color: red;
-  font-weight: bold;
+.statusText {
+  background-color: #EBF8FF;
+  color: #2B6CB0;
 }
 
-.resultContainer {
-  margin-top: 2rem;
+.errorText {
+  background-color: #FFF5F5;
+  color: #C53030;
+  font-weight: 500;
+}
+
+/* 结果展示区 */
+.resultSection {
   text-align: center;
 }
 
-.image {
-  max-width: 100%;
-  max-height: 50vh;
-  height: auto;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  margin-bottom: 1rem;
-  object-fit: contain;
+.sectionTitle {
+  font-size: 1.75rem;
+  margin-bottom: 1.5rem;
+  color: var(--foreground);
 }
 
-.downloadLink {
+.imageWrapper {
+  max-width: 500px;
+  margin: 0 auto 1.5rem;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.generatedImage {
+  width: 100%;
+  height: auto;
   display: block;
-  padding: 0.5rem 1rem;
-  background-color: #28a745;
+}
+
+.downloadButton {
+  display: inline-block;
+  padding: 0.8rem 2rem;
+  background-color: #38A169;
   color: white;
   text-decoration: none;
-  border-radius: 5px;
+  border-radius: 8px;
+  font-weight: 600;
   transition: background-color 0.3s;
 }
 
-.downloadLink:hover {
-  background-color: #218838;
+.downloadButton:hover {
+  background-color: #2F855A;
 }
 
-/* 历史记录网格布局 (已弃用，但保留以防万一) */
+
+/* 历史记录区 */
+.historySection {
+  margin-top: 2rem;
+}
+
 .historyGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
-  padding: 1rem;
+  gap: 1.5rem;
 }
 
-/* 历史记录单项样式 (已弃用，但保留以防万一) */
-.historyItemOld {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  border: 1px solid var(--foreground);
+.historyItem {
+  background-color: var(--sidebar-bg);
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.historyItem:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+}
+
+.historyImage {
+  width: 100%;
+  aspect-ratio: 1 / 1; /* 保持正方形 */
+  object-fit: cover;
+}
+
+.historyCaption {
+  padding: 0.8rem;
+  font-size: 0.9rem;
+  text-align: center;
+  color: #4A5568;
+  font-weight: 500;
+}
+
+.noHistoryText {
+  text-align: center;
+  color: #718096;
+  padding: 2rem;
+  background-color: var(--sidebar-bg);
+  border-radius: 8px;
 }

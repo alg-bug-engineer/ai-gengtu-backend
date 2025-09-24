@@ -1,3 +1,4 @@
+// alg-bug-engineer/ai-gengtu-backend/ai-gengtu-backend-683d3a06f02d6e71016f8d8e977d1795d9f89ed9/ai-gengtu-frontend/components/Layout.js
 import Head from 'next/head';
 import Sidebar from './Sidebar';
 import styles from '../styles/Home.module.css';

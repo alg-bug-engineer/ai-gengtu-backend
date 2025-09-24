@@ -1,11 +1,12 @@
+// alg-bug-engineer/ai-gengtu-backend/ai-gengtu-backend-683d3a06f02d6e71016f8d8e977d1795d9f89ed9/ai-gengtu-frontend/pages/_app.js
 import Layout from '../components/Layout';
 import "@/styles/globals.css";
 
-export default function App({ Component, pageProps }) {
+function MyApp({ Component, pageProps }) {
   // 登录和注册页面不使用 Layout 组件
-  const isLoginPage = Component.name === 'LoginPage' || Component.name === 'RegisterPage';
-  
-  if (isLoginPage) {
+  const noLayout = Component.name === 'LoginPage' || Component.name === 'RegisterPage';
+
+  if (noLayout) {
     return <Component {...pageProps} />;
   }
 
@@ -15,3 +16,5 @@ export default function App({ Component, pageProps }) {
     </Layout>
   );
 }
+
+export default MyApp;
