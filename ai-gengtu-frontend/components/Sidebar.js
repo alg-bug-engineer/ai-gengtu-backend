@@ -9,7 +9,6 @@ const features = [
 ];
 
 export default function Sidebar() {
-  const [history, setHistory] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const router = useRouter();
 
@@ -19,26 +18,22 @@ export default function Sidebar() {
   };
 
   useEffect(() => {
-    const fetchHistory = async () => {
+    const checkLoginStatus = async () => {
       try {
         const userRes = await fetch('http://8.149.232.39:5550/api/user', { credentials: 'include' });
         if (userRes.ok) {
           setIsLoggedIn(true);
-          const historyRes = await fetch('http://8.149.232.39:5550/api/history', { credentials: 'include' });
-          if (historyRes.ok) {
-            const historyData = await historyRes.json();
-            setHistory(historyData);
-          }
         } else {
           setIsLoggedIn(false);
           router.push('/login');
         }
       } catch (err) {
-        console.error('Failed to fetch history:', err);
-        // 这里不进行重定向，由 Layout 组件统一处理未登录情况
+        console.error('Failed to check login status:', err);
+        setIsLoggedIn(false);
+        router.push('/login');
       }
     };
-    fetchHistory();
+    checkLoginStatus();
   }, [router]);
 
   if (!isLoggedIn) {
@@ -56,24 +51,6 @@ export default function Sidebar() {
           </Link>
         ))}
       </nav>
-
-      <div className={styles.historyContainer}>
-        <h3 className={styles.historyTitle}>历史记录</h3>
-        <ul className={styles.historyList}>
-          {history.length > 0 ? (
-            history.map((item) => (
-              <li key={item.id} className={styles.historyItem}>
-                <Link href={`/meme_generator?historyId=${item.id}`} className={styles.historyLink}>
-                  <img src={`http://8.149.232.39:5550${item.image_url}`} alt={item.riddle_answer} className={styles.historyImageSmall} />
-                  <span>{item.riddle_answer}</span>
-                </Link>
-              </li>
-            ))
-          ) : (
-            <p className={styles.noHistoryText}>暂无历史记录。</p>
-          )}
-        </ul>
-      </div>
 
       <button onClick={handleLogout} className={styles.logoutButton}>
         登出

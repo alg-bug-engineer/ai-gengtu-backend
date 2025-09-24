@@ -9,28 +9,32 @@ export default function MemeGeneratorPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [credits, setCredits] = useState(null);
+  const [history, setHistory] = useState([]);
   const [selectedSize, setSelectedSize] = useState('vertical');
   const router = useRouter();
 
-  // 登录检查和历史记录获取已移至 Sidebar
   useEffect(() => {
-    const fetchCredits = async () => {
+    const fetchData = async () => {
       try {
         const userRes = await fetch('http://8.149.232.39:5550/api/user', { credentials: 'include' });
         if (userRes.ok) {
           const userData = await userRes.json();
           setCredits(userData.credits);
-        } else {
-          // 如果用户未登录，_app.js 的 Layout 已经处理了重定向，所以这里可以简化
-          setCredits(0);
+
+          const historyRes = await fetch('http://8.149.232.39:5550/api/history', { credentials: 'include' });
+          if (historyRes.ok) {
+            const historyData = await historyRes.json();
+            setHistory(historyData);
+          } else {
+            console.error('Failed to fetch history:', historyRes.status);
+          }
         }
       } catch (err) {
-        console.error('Failed to fetch user credits:', err);
-        setCredits(0);
+        console.error('Failed to fetch data:', err);
       }
     };
-    fetchCredits();
-  }, []);
+    fetchData();
+  }, [router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -128,6 +132,24 @@ export default function MemeGeneratorPage() {
           <a href={imageUrl} download="meme.png" className={styles.downloadLink}>
             下载梗图
           </a>
+        </div>
+      )}
+
+      {history.length > 0 && (
+        <div className={styles.historyContainer}>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', textAlign: 'center' }}>你的历史梗图</h2>
+          <div className={styles.historyGrid}>
+            {history.map((item) => (
+              <div key={item.id} className={styles.historyItem}>
+                <img 
+                  src={`http://8.149.232.39:5550${item.image_url}`} 
+                  alt={item.riddle_answer} 
+                  className={styles.historyImage} 
+                />
+                <p className={styles.historyPrompt}>{item.riddle_answer}</p>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
