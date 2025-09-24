@@ -270,9 +270,8 @@ def generate_meme():
     try:
         # 1. 调用部署在新加坡的 Gemini API 代理服务
         logging.info("Step 1: Calling remote Gemini API proxy.")
-        # 向新加坡服务发送请求，获取提示词
-        gemini_response = requests.post(SINGAPORE_GEMINI_API_URL, json={'answer': answer})
-        gemini_response.raise_for_status() # 检查HTTP响应状态
+        gemini_response = requests.post(SINGAPORE_GEMINI_API_URL, json={'answer': answer}, timeout=60)
+        gemini_response.raise_for_status()
         
         gemini_data = gemini_response.json()
         raw_prompt_text = gemini_data.get('prompt')
@@ -283,11 +282,10 @@ def generate_meme():
         matches = re.findall(PROMPT_PATTERN, raw_prompt_text, re.DOTALL)
         if not matches or len(matches) < 2:
             logging.error(f"Failed to parse Gemini response. Response was: {raw_prompt_text}")
-            raise ValueError("Gemini 响应格式不正确，无法解析出提示词。")
+            raise ValueError("Gemini 响应格式不正确。")
         chinese_prompt = matches[1].strip()
         logging.info("Step 1 complete. Successfully parsed Chinese prompt.")
         
-        # 定义尺寸映射
         size_map = {
             'vertical': {'width': 1024, 'height': 1920},
             'horizontal': {'width': 1920, 'height': 1024},
@@ -301,38 +299,42 @@ def generate_meme():
         
         if not image_path:
             logging.error("Jimeng API call failed. No image path returned.")
-            raise Exception("图片生成失败，未返回有效的图片路径。")
+            raise Exception("图片生成失败。")
         logging.info(f"Step 2 complete. Image saved at: {image_path}")
             
         # 3. 成功后，更新数据库记录和用户额度
         logging.info(f"Step 3: Updating user credits and generation record for ID: {new_generation.id}")
         current_user.generation_credits -= 1
-        new_generation.prompt_text = raw_prompt_text # 存储完整提示词
-        new_generation.image_url = f"/generated_images/{os.path.basename(image_path)}" # 存储相对URL
+        new_generation.prompt_text = raw_prompt_text
+        new_generation.image_url = f"/generated_images/{os.path.basename(image_path)}"
         new_generation.status = 'completed'
         db.session.commit()
         logging.info(f"Database updated successfully. Remaining credits for user {current_user.email}: {current_user.generation_credits}")
         
+        # 使用 send_file 时，直接返回文件流，不返回 JSON
         return send_file(image_path, mimetype='image/png')
         
     except ValueError as ve:
-        logging.error(f"Processing failed due to a ValueError: {ve}")
+        logging.error(f"Processing failed due to a ValueError: {ve}", exc_info=True)
         db.session.rollback()
         new_generation.status = 'failed'
         db.session.commit()
-        return jsonify({"message": "value error"}), 500
+        # 返回通用错误信息，隐藏内部细节
+        return jsonify({"message": "内容生成或解析失败，请尝试其他词语。"}), 500
     except requests.exceptions.RequestException as ree:
-        logging.error(f"Failed to connect to Singapore Gemini API proxy: {ree}")
+        logging.error(f"Failed to connect to Singapore Gemini API proxy: {ree}", exc_info=True)
         db.session.rollback()
         new_generation.status = 'failed'
         db.session.commit()
+        # 返回通用错误信息，隐藏服务URL
         return jsonify({"message": "无法连接到海外服务，请稍后再试。"}), 500
     except Exception as e:
         logging.error(f"An unexpected error occurred during meme generation: {e}", exc_info=True)
         db.session.rollback()
         new_generation.status = 'failed'
         db.session.commit()
-        return jsonify({"message": "An unexpected error occurred."}), 500
+        # 返回通用错误信息，不暴露任何内部信息
+        return jsonify({"message": "哎呀，出了点小问题，请稍后再试。"}), 500
 
 if __name__ == '__main__':
     logging.info("Starting Flask application.")

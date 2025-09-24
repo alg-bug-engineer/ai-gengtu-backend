@@ -17,9 +17,26 @@ const FeatureCard = ({ title, description, link, icon }) => (
 export default function FeaturesPage() {
   const router = useRouter();
 
-  // 登录检查和历史记录获取已移至 Sidebar
-  // 这里只负责页面内容的展示
-  
+  useEffect(() => {
+    // 登录后直接重定向到梗图生成器页面
+    const checkLoginStatusAndRedirect = async () => {
+      try {
+        const userRes = await fetch('http://8.149.232.39:5550/api/user', { credentials: 'include' });
+        if (userRes.ok) {
+          // 如果已登录，直接跳转到梗图生成器页面
+          router.replace('/meme_generator');
+        } else {
+          // 如果未登录，则跳转到登录页
+          router.push('/login');
+        }
+      } catch (err) {
+        console.error('Failed to check login status:', err);
+        router.push('/login');
+      }
+    };
+    checkLoginStatusAndRedirect();
+  }, [router]);
+
   return (
     <div className={styles.featurePageContainer}>
       <Head>

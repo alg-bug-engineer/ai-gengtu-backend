@@ -56,14 +56,16 @@ export default function MemeGeneratorPage() {
         credentials: 'include'
       });
 
+      // 优化错误处理，根据状态码返回更友好的提示
       if (response.status === 402) {
+        // 402 错误表示额度不足
         const errorData = await response.json();
-        throw new Error(errorData.message);
+        throw new Error(errorData.message || '您的生成额度已用完。');
       }
       
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'API 请求失败，请检查后端服务。');
+        // 其他非OK状态码，返回通用错误信息
+        throw new Error('梗图生成失败，请稍后再试。');
       }
 
       const imageBlob = await response.blob();
