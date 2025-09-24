@@ -315,3 +315,64 @@
   background-color: var(--sidebar-bg);
   border-radius: 8px;
 }
+
+/* --- 5. 立体雕塑页面特殊样式 --- */
+.uploadDescription {
+  text-align: center;
+  color: #4A5568;
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.uploadForm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.fileInput {
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  z-index: -1;
+}
+
+.uploadLabel {
+  padding: 0.8rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2B6CB0;
+  background-color: #EBF8FF;
+  border: 2px dashed #BEE3F8;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.uploadLabel:hover {
+  background-color: #BEE3F8;
+  color: #2C5282;
+}
+
+.imagePreview {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--border-color);
+}
+
+.historyCaption {
+  padding: 0.8rem;
+  font-size: 0.9rem;
+  text-align: center;
+  color: #4A5568;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -6,6 +6,7 @@ import logging
 import requests  # 新增导入 requests 库
 from datetime import datetime, timezone
 from werkzeug.exceptions import HTTPException
+from werkzeug.utils import secure_filename
 from flask import Flask, request, jsonify, session, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -335,6 +336,79 @@ def generate_meme():
         db.session.commit()
         # 返回通用错误信息，不暴露任何内部信息
         return jsonify({"message": "哎呀，出了点小问题，请稍后再试。"}), 500
+
+
+@app.route('/api/generate_figurine', methods=['POST'])
+@login_required
+def generate_figurine():
+    logging.info(f"API route /api/generate_figurine called by user: {current_user.email}")
+
+    # 1. 检查文件是否存在于请求中
+    if 'image' not in request.files:
+        logging.warning("Figurine generation failed: No image file provided.")
+        return jsonify({"message": "未找到上传的图片文件。"}), 400
+
+    file = request.files['image']
+
+    # 2. 检查文件名
+    if file.filename == '':
+        logging.warning("Figurine generation failed: No image file selected.")
+        return jsonify({"message": "请选择一个图片文件。"}), 400
+
+    # 3. 商业化逻辑: 检查用户额度
+    logging.info(f"Checking credits for user {current_user.email}. Current credits: {current_user.generation_credits}")
+    if current_user.generation_credits <= 0:
+        logging.warning(f"Figurine generation failed for user {current_user.email}: No credits left.")
+        return jsonify({"message": "您的生成额度已用完。"}), 402
+
+    # (可选) 保存上传的文件以备将来使用，这里我们仅验证上传成功
+    filename = secure_filename(file.filename)
+    file.save(os.path.join('//root/ai-gengtu-backend/uploads', filename))
+
+    # 4. 创建生成记录
+    logging.info("Creating new generation record for figurine.")
+    new_generation = Generation(user_id=current_user.id, riddle_answer="立体雕塑作品", status='pending')
+    db.session.add(new_generation)
+    db.session.commit()
+    logging.info(f"New generation record created with ID: {new_generation.id}")
+
+    try:
+        # 5. 使用您提供的固定提示词
+        figurine_prompt = (
+            "First ask me to upload an image and then create a 1/7 scale commercialized figurine of the characters in the picture, "
+            "in a realistic style, in a real environment. The figurine is placed on a computer desk. "
+            "The figurine has a round transparent acrylic base, with no text on the base. "
+            "The content on the computer screen is a 3D modeling process of this figurine. "
+            "Next to the computer screen is a toy packaging box, designed in a style reminiscent of high-quality collectible figures, "
+            "printed with original artwork. The packaging features two-dimensional flat illustrations."
+        )
+        
+        # 6. 调用 jimeng_api 生成图片 (使用固定的方形尺寸)
+        logging.info("Calling jimeng_api to generate figurine image.")
+        image_path = jimeng_generate_api(figurine_prompt, 1024, 1024)
+        
+        if not image_path:
+            raise Exception("图片生成服务未能返回结果。")
+        logging.info(f"Image generated and saved at: {image_path}")
+            
+        # 7. 成功后，更新数据库记录和用户额度
+        logging.info(f"Updating database for generation ID: {new_generation.id}")
+        current_user.generation_credits -= 1
+        new_generation.prompt_text = figurine_prompt # 记录使用的prompt
+        new_generation.image_url = f"/generated_images/{os.path.basename(image_path)}"
+        new_generation.status = 'completed'
+        db.session.commit()
+        logging.info(f"Database updated. Remaining credits for {current_user.email}: {current_user.generation_credits}")
+        
+        return send_file(image_path, mimetype='image/png')
+        
+    except Exception as e:
+        logging.error(f"An unexpected error occurred during figurine generation: {e}", exc_info=True)
+        db.session.rollback()
+        new_generation.status = 'failed'
+        db.session.commit()
+        return jsonify({"message": "生成手办时发生未知错误，请稍后再试。"}), 500
+
 
 if __name__ == '__main__':
     logging.info("Starting Flask application.")

@@ -1,13 +1,12 @@
 // alg-bug-engineer/ai-gengtu-backend/ai-gengtu-backend-683d3a06f02d6e71016f8d8e977d1795d9f89ed9/ai-gengtu-frontend/components/Sidebar.js
-import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import styles from '../styles/Home.module.css';
 
-// Define the features, including the new "in-development" one
+// 更新功能列表，激活“立体雕塑”
 const features = [
   { title: "AI 梗图", link: "/meme_generator", icon: "/file.svg" },
-  { title: "立体雕塑 (开发中)", link: "#", icon: "/globe.svg", disabled: true },
+  { title: "立体雕塑", link: "/figurine_generator", icon: "/globe.svg", disabled: false },
 ];
 
 export default function Sidebar() {
@@ -19,7 +18,6 @@ export default function Sidebar() {
       router.push('/login');
     } catch (error) {
       console.error('Logout failed:', error);
-      // Fallback to redirect even if API fails
       router.push('/login');
     }
   };
