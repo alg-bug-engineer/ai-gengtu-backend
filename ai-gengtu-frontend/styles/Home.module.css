@@ -1,14 +1,145 @@
-.container {
+/* 新的根容器 */
+.appContainer {
+  display: flex;
   min-height: 100vh;
-  padding: 0 0.5rem;
+}
+
+/* 左侧边栏 */
+.sidebar {
+  width: 250px;
+  background-color: var(--sidebar-bg);
+  padding: 2rem 1rem;
+  border-right: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+}
+
+.sidebarTitle {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  color: var(--foreground);
+}
+
+.featureNav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.featureLink {
+  display: flex;
   align-items: center;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  color: var(--foreground);
+  transition: background-color 0.2s;
+}
+
+.featureLink:hover {
+  background-color: var(--link-hover-bg);
+}
+
+.featureIcon {
+  width: 20px;
+  height: 20px;
+  margin-right: 0.75rem;
+}
+
+.logoutButton {
+  margin-top: auto; /* 将登出按钮推到底部 */
+  padding: 0.75rem 1rem;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.logoutButton:hover {
+  background-color: #dc2626;
+}
+
+/* 历史记录容器 */
+.historyContainer {
+  margin-top: 2rem;
+  overflow-y: auto;
+  flex-grow: 1; /* 占据剩余空间 */
+}
+
+.historyTitle {
+  font-size: 1rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  color: #64748b;
+}
+
+.historyList {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.historyItem {
+  padding: 0;
+}
+
+.historyLink {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.historyLink:hover {
+  background-color: var(--link-hover-bg);
+}
+
+.historyImageSmall {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.noHistoryText {
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+
+/* 右侧主内容区 */
+.mainContent {
+  flex-grow: 1;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.memeGeneratorPage {
+  width: 100%;
+  max-width: 600px;
+}
+
+
+/* 现有样式保持不变，但要确保兼容新的布局 */
+.container {
+  /* 移除之前的 flex 和 padding 样式，由 mainContent 和 memeGeneratorPage 接管 */
+  min-height: auto;
+  padding: 0;
 }
 
 .main {
-  padding: 5rem 0;
+  /* 移除之前的 flex 和 padding 样式 */
+  padding: 0;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -16,6 +147,7 @@
   align-items: center;
 }
 
+/* 现有样式保持不变 */
 .title {
   margin: 0;
   line-height: 1.15;
@@ -81,17 +213,16 @@
 
 .image {
   max-width: 100%;
-  max-height: 50vh; /* 新增：将图片高度限制为视口高度的70% */
+  max-height: 50vh;
   height: auto;
   border: 1px solid #ddd;
   border-radius: 5px;
   margin-bottom: 1rem;
-  /* 确保图片在容器中完整显示，避免裁剪 */
   object-fit: contain;
 }
 
 .downloadLink {
-  display: block; /* 优化：强制元素独占一行 */
+  display: block;
   padding: 0.5rem 1rem;
   background-color: #28a745;
   color: white;
@@ -104,20 +235,7 @@
   background-color: #218838;
 }
 
-/* 新增：历史记录容器样式 */
-.historyContainer {
-  margin-top: 3rem;
-  width: 100%;
-  text-align: center;
-}
-
-.historyContainer h2 {
-  font-size: 1.5rem;
-  color: var(--foreground);
-  margin-bottom: 1rem;
-}
-
-/* 新增：历史记录网格布局 */
+/* 历史记录网格布局 (已弃用，但保留以防万一) */
 .historyGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -125,8 +243,8 @@
   padding: 1rem;
 }
 
-/* 新增：历史记录单项样式 */
-.historyItem {
+/* 历史记录单项样式 (已弃用，但保留以防万一) */
+.historyItemOld {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -135,89 +253,4 @@
   overflow: hidden;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s;
-}
-
-.historyItem:hover {
-  transform: translateY(-5px);
-}
-
-.historyImage {
-  width: 100%;
-  height: auto;
-  object-fit: contain;
-  border-bottom: 1px solid var(--foreground);
-}
-
-.historyPrompt {
-  padding: 0.5rem;
-  font-size: 0.8rem;
-  color: var(--foreground);
-  text-align: center;
-  word-wrap: break-word;
-}
-
-/* ... (保留现有所有样式) ... */
-
-/* 新增：功能网格布局 */
-.featureGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 2rem;
-  width: 100%;
-  max-width: 900px;
-  margin-top: 2rem;
-}
-
-/* 新增：功能卡片样式 */
-.featureCard {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 2rem;
-  border: 1px solid #eaeaea;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.featureCard:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-}
-
-.cardContent {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-}
-
-.cardIcon {
-  width: 64px;
-  height: 64px;
-  margin-bottom: 1rem;
-}
-
-.cardTitle {
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.cardDescription {
-  color: #666;
-  font-size: 1rem;
-}
-
-@media (prefers-color-scheme: dark) {
-  .featureCard {
-    border-color: #333;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-  }
-  .featureCard:hover {
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-  }
-  .cardDescription {
-    color: #bbb;
-  }
 }

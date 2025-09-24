@@ -15,51 +15,25 @@ const FeatureCard = ({ title, description, link, icon }) => (
 );
 
 export default function FeaturesPage() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    const checkLoginStatus = async () => {
-      try {
-        const userRes = await fetch('http://8.149.232.39:5550/api/user', { credentials: 'include' });
-        if (userRes.ok) {
-          setIsLoggedIn(true);
-        } else {
-          setIsLoggedIn(false);
-          router.push('/login');
-        }
-      } catch (err) {
-        console.error('Fetch error during login status check:', err);
-        setIsLoggedIn(false);
-        router.push('/login');
-      }
-    };
-    checkLoginStatus();
-  }, [router]);
-
-  if (!isLoggedIn) {
-    return null;
-  }
-
+  // 检查登录状态的逻辑现在由 Layout 和 Sidebar 处理
+  // 这里只负责页面内容的展示
+  
   return (
-    <div className={styles.container}>
+    <div className={styles.featurePageContainer}>
       <Head>
-        <title>功能列表 - AI 梗图生成器</title>
-        <meta name="description" content="AI 梗图生成器应用功能列表" />
-        <link rel="icon" href="/favicon.ico" />
+        <title>功能列表 - AI 创作平台</title>
       </Head>
-
-      <main className={styles.main}>
-        <h1 className={styles.title}>选择一个功能</h1>
-        <div className={styles.featureGrid}>
-          <FeatureCard
-            title="AI 梗图生成器"
-            description="输入一个谜底，让AI为你创作有趣的看图猜谜梗图。"
-            link="/meme_generator"
-            icon="/file.svg"
-          />
-        </div>
-      </main>
+      <h1 className={styles.title}>选择一个功能</h1>
+      <div className={styles.featureGrid}>
+        <FeatureCard
+          title="AI 梗图生成器"
+          description="输入一个谜底，让AI为你创作有趣的看图猜谜梗图。"
+          link="/meme_generator"
+          icon="/file.svg"
+        />
+      </div>
     </div>
   );
 }

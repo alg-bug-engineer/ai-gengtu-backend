@@ -1,12 +1,16 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --sidebar-bg: #f9fafb;
+  --link-hover-bg: #f1f5f9;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --sidebar-bg: #1e1e1e;
+    --link-hover-bg: #333;
   }
 }
 
