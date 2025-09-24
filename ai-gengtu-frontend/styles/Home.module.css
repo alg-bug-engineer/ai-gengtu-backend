@@ -91,7 +91,7 @@
 }
 
 .downloadLink {
-  display: inline-block;
+  display: block; /* 优化：强制元素独占一行 */
   padding: 0.5rem 1rem;
   background-color: #28a745;
   color: white;
