@@ -377,7 +377,7 @@ def jimeng_generate_api(prompt: str) -> Optional[str]:
         "req_key": "jimeng_t2i_v40",  # 即梦生图V4.0模型
         "prompt": prompt,             # 用户输入的提示词
         "width": 1024,
-        "height": 1024
+        "height": 1920
     }
     
     # 3. 发送签名请求并返回图片路径

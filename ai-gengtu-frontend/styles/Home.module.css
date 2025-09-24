@@ -81,10 +81,13 @@
 
 .image {
   max-width: 100%;
+  max-height: 50vh; /* 新增：将图片高度限制为视口高度的70% */
   height: auto;
   border: 1px solid #ddd;
   border-radius: 5px;
   margin-bottom: 1rem;
+  /* 确保图片在容器中完整显示，避免裁剪 */
+  object-fit: contain;
 }
 
 .downloadLink {
