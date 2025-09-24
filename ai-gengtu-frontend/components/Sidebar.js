@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import styles from '../styles/Home.module.css';
 
-// 定义功能列表
+// Define the features, including the new "in-development" one
 const features = [
   { title: "AI 梗图", link: "/meme_generator", icon: "/file.svg" },
   { title: "立体雕塑 (开发中)", link: "#", icon: "/globe.svg", disabled: true },
@@ -19,7 +19,7 @@ export default function Sidebar() {
       router.push('/login');
     } catch (error) {
       console.error('Logout failed:', error);
-      // 即使登出接口失败，也强制跳转到登录页
+      // Fallback to redirect even if API fails
       router.push('/login');
     }
   };
@@ -30,11 +30,15 @@ export default function Sidebar() {
         <h1 className={styles.sidebarTitle}>AI 创作平台</h1>
         <nav className={styles.featureNav}>
           {features.map((feature) => (
-            <Link key={feature.title} href={feature.disabled ? "#" : feature.link}>
-              <a className={`${styles.featureLink} ${router.pathname === feature.link ? styles.activeLink : ''} ${feature.disabled ? styles.disabledLink : ''}`}>
-                <img src={feature.icon} alt={`${feature.title} icon`} className={styles.featureIcon} />
-                {feature.title}
-              </a>
+            <Link
+              key={feature.title}
+              href={feature.disabled ? "#" : feature.link}
+              className={`${styles.featureLink} ${router.pathname === feature.link ? styles.activeLink : ''} ${feature.disabled ? styles.disabledLink : ''}`}
+              aria-disabled={feature.disabled}
+              onClick={(e) => feature.disabled && e.preventDefault()}
+            >
+              <img src={feature.icon} alt={`${feature.title} icon`} className={styles.featureIcon} />
+              {feature.title}
             </Link>
           ))}
         </nav>
