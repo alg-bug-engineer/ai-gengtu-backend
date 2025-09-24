@@ -12,6 +12,7 @@ export default function HomePage() {
   const [credits, setCredits] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [history, setHistory] = useState([]); // 新增状态来存储历史记录
+  const [selectedSize, setSelectedSize] = useState('vertical'); // 默认尺寸为'vertical'
   const router = useRouter();
 
 
@@ -73,7 +74,7 @@ export default function HomePage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ answer }),
+        body: JSON.stringify({ answer, selectedSize }), // 传递新参数
         credentials: 'include'
       });
 
@@ -148,8 +149,19 @@ export default function HomePage() {
             placeholder="例如：东施效颦"
             disabled={loading || (credits !== null && credits <= 0)}
           />
+          {/* 新增尺寸选择器 */}
+            <select
+              value={selectedSize}
+              onChange={(e) => setSelectedSize(e.target.value)}
+              disabled={loading || (credits !== null && credits <= 0)}
+              style={{ width: '100%', marginBottom: '1rem', padding: '0.75rem', fontSize: '1rem' }}
+            >
+              <option value="vertical">竖屏（1024x1920）</option>
+              <option value="horizontal">横屏（1920x1024）</option>
+              <option value="square">正方形（1024x1024）</option>
+            </select>
           <button type="submit" className={styles.button} disabled={loading || (credits !== null && credits <= 0)}>
-            {loading ? '生成中...' : '生成梗图'}
+            {loading ? '生成中，您可以离开，稍后在返回本页面查看结果即可...' : '生成梗图'}
           </button>
         </form>
 

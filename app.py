@@ -233,6 +233,7 @@ def generate_meme():
     logging.info(f"API route /api/generate_meme called by user: {current_user.email}")
     data = request.get_json()
     answer = data.get('answer')
+    selected_size = data.get('selectedSize', 'vertical') # 接收新参数，并设置默认值
     logging.info(f"Received request for meme generation. Answer: {answer}")
 
     if not answer:
@@ -271,10 +272,18 @@ def generate_meme():
             raise ValueError("Gemini 响应格式不正确，无法解析出提示词。")
         chinese_prompt = matches[1].strip()
         logging.info("Step 1 complete. Successfully parsed Chinese prompt.")
+        
+        # 定义尺寸映射
+        size_map = {
+            'vertical': {'width': 1024, 'height': 1920},
+            'horizontal': {'width': 1920, 'height': 1024},
+            'square': {'width': 1024, 'height': 1024}
+        }
+        dimensions = size_map.get(selected_size, size_map['vertical'])
 
         # 2. 调用 jimeng_api 生成图片
         logging.info("Step 2: Calling jimeng_api to generate image.")
-        image_path = jimeng_generate_api(chinese_prompt)
+        image_path = jimeng_generate_api(chinese_prompt, dimensions['width'], dimensions['height'])
         
         if not image_path:
             logging.error("Jimeng API call failed. No image path returned.")

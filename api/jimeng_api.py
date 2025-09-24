@@ -352,18 +352,20 @@ def send_v4_signed_request(
 # ------------------------------
 # 7. 业务函数：即梦生图API调用入口
 # ------------------------------
-def jimeng_generate_api(prompt: str) -> Optional[str]:
+def jimeng_generate_api(prompt: str, width: int, height: int) -> Optional[str]:
     """
     即梦生图API调用入口：输入提示词，返回图片保存路径
-    
+
     参数:
         prompt: 图片生成提示词（中文，需符合即梦生图格式要求）
-    
+        width: 图片宽度
+        height: 图片高度
+
     返回:
         Optional[str]: 成功返回图片路径；失败返回None
     """
     logging.info("=" * 50)
-    logging.info("开始调用即梦生图API，提示词：%s", prompt)
+    logging.info("开始调用即梦生图API，提示词：%s，尺寸：%dx%d", prompt, width, height)
     logging.info("=" * 50)
     
     # 1. 构建API查询参数（即梦生图固定参数）
@@ -376,8 +378,8 @@ def jimeng_generate_api(prompt: str) -> Optional[str]:
     request_body = {
         "req_key": "jimeng_t2i_v40",  # 即梦生图V4.0模型
         "prompt": prompt,             # 用户输入的提示词
-        "width": 1024,
-        "height": 1920
+        "width": width,
+        "height": height
     }
     
     # 3. 发送签名请求并返回图片路径
