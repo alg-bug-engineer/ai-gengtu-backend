@@ -126,6 +126,23 @@ def get_history():
     logging.info(f"Returning {len(history_list)} history records for user {current_user.email}")
     return jsonify(history_list), 200
 
+@app.route('/generated_images/<path:filename>')
+def serve_generated_image(filename):
+    """
+    通过 HTTP 接口向前端提供生成的图片文件
+    """
+    # 构造完整的本地文件路径
+    image_dir = os.environ.get("DEFAULT_IMAGE_DIR", "/root/ai-gengtu-backend/images")
+    full_path = os.path.join(image_dir, filename)
+    
+    # 检查文件是否存在
+    if not os.path.exists(full_path):
+        return "File not found", 404
+
+    # 使用 Flask 的 send_file 发送文件
+    # mimetype 'image/jpeg' 或 'image/png' 根据实际情况调整
+    return send_file(full_path, mimetype='image/jpeg')
+
 @app.route('/api/register', methods=['POST'])
 def register():
     logging.info("API route /api/register called.")

@@ -138,8 +138,19 @@ export default function HomePage() {
           剩余额度：<span style={{ fontWeight: 'bold' }}>{credits !== null ? credits : '加载中...'}</span>
         </p>
 
+        {/* 确保您的 form 元素在此处 */}
         <form className={styles.form} onSubmit={handleSubmit}>
-          {/* ... (输入框和按钮) */}
+          <input
+            type="text"
+            className={styles.input}
+            value={answer}
+            onChange={(e) => setAnswer(e.target.value)}
+            placeholder="例如：东施效颦"
+            disabled={loading || (credits !== null && credits <= 0)}
+          />
+          <button type="submit" className={styles.button} disabled={loading || (credits !== null && credits <= 0)}>
+            {loading ? '生成中...' : '生成梗图'}
+          </button>
         </form>
 
         {loading && <p className={styles.status}>正在努力创作中，请稍候...</p>}
@@ -164,7 +175,11 @@ export default function HomePage() {
             <div className={styles.historyGrid}>
               {history.map((item) => (
                 <div key={item.id} className={styles.historyItem}>
-                  <img src={item.image_url} alt={item.riddle_answer} className={styles.historyImage} />
+                  <img 
+                    src={`http://8.149.232.39:5550${item.image_url}`} // 优化：拼接完整的后端 URL
+                    alt={item.riddle_answer} 
+                    className={styles.historyImage} 
+                  />
                   <p className={styles.historyPrompt}>{item.riddle_answer}</p>
                 </div>
               ))}
