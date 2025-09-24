@@ -5,7 +5,7 @@ import re
 import logging
 import requests  # 新增导入 requests 库
 from datetime import datetime, timezone
-
+from werkzeug.exceptions import HTTPException
 from flask import Flask, request, jsonify, session, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -53,7 +53,6 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logging.info("Flask 应用初始化完成。")
 
 # --- 数据库模型 ---
-
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -101,6 +100,21 @@ def load_user(user_id):
 
 # --- API 路由 ---
 PROMPT_PATTERN = r'```json(.*?)```'
+
+
+@app.errorhandler(Exception)
+def handle_unexpected_error(e):
+    """
+    统一处理所有未预料的异常，返回通用错误信息。
+    """
+    logging.error(f"An unhandled exception occurred: {e}", exc_info=True)
+    # 对于 HTTP 异常，可以返回其自身的信息
+    if isinstance(e, HTTPException):
+        return jsonify({"message": e.description}), e.code
+
+    # 对于所有其他未捕获的异常，返回一个通用的、友好的错误信息
+    # 避免将原始的错误细节暴露给前端
+    return jsonify({"message": "服务器发生了一个未知错误，请稍后再试。"}), 500
 
 
 @app.route('/api/history', methods=['GET'])
@@ -306,7 +320,7 @@ def generate_meme():
         db.session.rollback()
         new_generation.status = 'failed'
         db.session.commit()
-        return jsonify({"message": str(ve)}), 500
+        return jsonify({"message": "value error"}), 500
     except requests.exceptions.RequestException as ree:
         logging.error(f"Failed to connect to Singapore Gemini API proxy: {ree}")
         db.session.rollback()

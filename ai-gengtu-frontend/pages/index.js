@@ -85,11 +85,13 @@ export default function HomePage() {
         console.error('API Error (402):', errorData.message);
         throw new Error(errorData.message);
       }
-      
+      const data = await response.json();
       if (!response.ok) {
-        const errorData = await response.json();
+        // const errorData = await response.json();
         console.error('API Error:', errorData.message || 'API 请求失败，请检查后端服务。');
-        throw new Error(errorData.message || 'API 请求失败，请检查后端服务。');
+        setError(data.message || 'API 请求失败，请检查后端服务。');
+        throw new Error(data.message || 'API 请求失败');
+        // throw new Error(errorData.message || 'API 请求失败，请检查后端服务。');
       }
 
       const imageBlob = await response.blob();
@@ -111,7 +113,8 @@ export default function HomePage() {
 
     } catch (err) {
       console.error('An error occurred during meme generation:', err);
-      setError(err.message);
+      // setError(err.message);
+      setError('哎呀，出了点小问题，请稍后再试。');
     } finally {
       console.log('handleSubmit: Function finished. Setting loading to false.');
       setLoading(false);
