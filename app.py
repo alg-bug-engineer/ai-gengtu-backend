@@ -102,6 +102,30 @@ def load_user(user_id):
 # --- API 路由 ---
 PROMPT_PATTERN = r'```json(.*?)```'
 
+
+@app.route('/api/history', methods=['GET'])
+@login_required
+def get_history():
+    """
+    获取当前用户的所有历史生成记录
+    """
+    logging.info(f"API route /api/history called for user: {current_user.email}")
+    
+    # 查询当前用户的所有生成记录，按创建时间降序排列
+    user_generations = Generation.query.filter_by(user_id=current_user.id).order_by(Generation.created_at.desc()).all()
+    
+    history_list = []
+    for gen in user_generations:
+        history_list.append({
+            "id": gen.id,
+            "riddle_answer": gen.riddle_answer,
+            "image_url": gen.image_url,
+            "created_at": gen.created_at.isoformat()
+        })
+    
+    logging.info(f"Returning {len(history_list)} history records for user {current_user.email}")
+    return jsonify(history_list), 200
+
 @app.route('/api/register', methods=['POST'])
 def register():
     logging.info("API route /api/register called.")

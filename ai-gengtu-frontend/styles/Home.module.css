@@ -103,3 +103,55 @@
 .downloadLink:hover {
   background-color: #218838;
 }
+
+/* 新增：历史记录容器样式 */
+.historyContainer {
+  margin-top: 3rem;
+  width: 100%;
+  text-align: center;
+}
+
+.historyContainer h2 {
+  font-size: 1.5rem;
+  color: var(--foreground);
+  margin-bottom: 1rem;
+}
+
+/* 新增：历史记录网格布局 */
+.historyGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+/* 新增：历史记录单项样式 */
+.historyItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid var(--foreground);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+}
+
+.historyItem:hover {
+  transform: translateY(-5px);
+}
+
+.historyImage {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-bottom: 1px solid var(--foreground);
+}
+
+.historyPrompt {
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--foreground);
+  text-align: center;
+  word-wrap: break-word;
+}

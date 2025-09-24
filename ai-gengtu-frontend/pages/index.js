@@ -11,32 +11,45 @@ export default function HomePage() {
   const [error, setError] = useState(null);
   const [credits, setCredits] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [history, setHistory] = useState([]); // 新增状态来存储历史记录
   const router = useRouter();
 
-  // 检查登录状态和获取用户额度
+
+  // 检查登录状态和获取用户额度及历史记录
   useEffect(() => {
-    const checkLogin = async () => {
-      console.log('useEffect: Starting login status check.');
+    const checkLoginAndFetchData = async () => {
+      console.log('useEffect: Starting login status check and data fetch.');
       try {
-        const res = await fetch('http://8.149.232.39:5550/api/user', { credentials: 'include' });
-        console.log('API call to /api/user finished with status:', res.status);
-        if (res.ok) {
-          const data = await res.json();
-          console.log('User is logged in. User info:', data);
+        const userRes = await fetch('http://8.149.232.39:5550/api/user', { credentials: 'include' });
+        console.log('API call to /api/user finished with status:', userRes.status);
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          console.log('User is logged in. User info:', userData);
           setIsLoggedIn(true);
-          setCredits(data.credits);
+          setCredits(userData.credits);
+
+          // 成功登录后，立即获取历史记录
+          const historyRes = await fetch('http://8.149.232.39:5550/api/history', { credentials: 'include' });
+          if (historyRes.ok) {
+            const historyData = await historyRes.json();
+            setHistory(historyData);
+            console.log('History data fetched successfully.', historyData);
+          } else {
+            console.error('Failed to fetch history. Status:', historyRes.status);
+          }
+
         } else {
-          console.log('User is not logged in. Status:', res.status, 'Redirecting to login page.');
+          console.log('User is not logged in. Redirecting to login page.');
           setIsLoggedIn(false);
           router.push('/login');
         }
       } catch (err) {
-        console.error('Fetch user info error during useEffect:', err);
+        console.error('Fetch error during useEffect:', err);
         setIsLoggedIn(false);
         router.push('/login');
       }
     };
-    checkLogin();
+    checkLoginAndFetchData();
   }, [router]);
 
   const handleSubmit = async (e) => {
@@ -126,33 +139,36 @@ export default function HomePage() {
         </p>
 
         <form className={styles.form} onSubmit={handleSubmit}>
-          <input
-            type="text"
-            className={styles.input}
-            value={answer}
-            onChange={(e) => {
-              setAnswer(e.target.value);
-              console.log('Input value changed:', e.target.value);
-            }}
-            placeholder="例如：东施效颦"
-            disabled={loading || (credits !== null && credits <= 0)}
-          />
-          <button type="submit" className={styles.button} disabled={loading || (credits !== null && credits <= 0)}>
-            {loading ? '生成中...' : '生成梗图'}
-          </button>
+          {/* ... (输入框和按钮) */}
         </form>
 
         {loading && <p className={styles.status}>正在努力创作中，请稍候...</p>}
         
         {error && <p className={styles.error}>{error}</p>}
 
+        {/* 当前生成结果展示区 */}
         {imageUrl && (
           <div className={styles.resultContainer}>
-            <h2>生成的梗图：</h2>
+            <h2>最新生成的梗图：</h2>
             <img src={imageUrl} alt="Generated meme" className={styles.image} />
             <a href={imageUrl} download="meme.png" className={styles.downloadLink}>
               下载梗图
             </a>
+          </div>
+        )}
+
+        {/* 历史记录展示区 */}
+        {history.length > 0 && (
+          <div className={styles.historyContainer}>
+            <h2>你的历史梗图</h2>
+            <div className={styles.historyGrid}>
+              {history.map((item) => (
+                <div key={item.id} className={styles.historyItem}>
+                  <img src={item.image_url} alt={item.riddle_answer} className={styles.historyImage} />
+                  <p className={styles.historyPrompt}>{item.riddle_answer}</p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </main>
