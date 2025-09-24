@@ -19,7 +19,11 @@ export default function LoginPage() {
     setError(null);
 
     try {
+<<<<<<< HEAD
       const response = await fetch('http://8.149.232.39:5550/api/login', {
+=======
+      const response = await fetch('http://127.0.0.1:5550/api/login', {
+>>>>>>> refs/remotes/origin/main
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

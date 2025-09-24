@@ -22,7 +22,11 @@ export default function RegisterPage() {
     setSuccess(null);
 
     try {
+<<<<<<< HEAD
       const response = await fetch('http://8.149.232.39:5550/api/register', {
+=======
+      const response = await fetch('http://127.0.0.1:5550/api/register', {
+>>>>>>> refs/remotes/origin/main
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

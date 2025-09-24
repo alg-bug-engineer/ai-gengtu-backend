@@ -15,6 +15,9 @@ from flask_migrate import Migrate
 from dotenv import load_dotenv
 
 load_dotenv()
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # 将 api 目录添加到系统路径
 sys.path.append(os.path.join(os.path.dirname(__file__), 'api'))

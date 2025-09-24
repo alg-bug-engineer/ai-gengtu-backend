@@ -18,7 +18,11 @@ export default function HomePage() {
     const checkLogin = async () => {
       console.log('useEffect: Starting login status check.');
       try {
+<<<<<<< HEAD
         const res = await fetch('http://8.149.232.39:5550/api/user', { credentials: 'include' });
+=======
+        const res = await fetch('http://127.0.0.1:5550/api/user', { credentials: 'include' });
+>>>>>>> refs/remotes/origin/main
         console.log('API call to /api/user finished with status:', res.status);
         if (res.ok) {
           const data = await res.json();
@@ -55,7 +59,11 @@ export default function HomePage() {
 
     console.log('Answer to be submitted:', answer);
     try {
+<<<<<<< HEAD
       const response = await fetch('http://8.149.232.39:5550/api/generate_meme', {
+=======
+      const response = await fetch('http://127.0.0.1:5550/api/generate_meme', {
+>>>>>>> refs/remotes/origin/main
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -86,7 +94,11 @@ export default function HomePage() {
 
       // 生成成功后，重新获取用户额度
       console.log('Generation successful. Fetching updated user credits.');
+<<<<<<< HEAD
       const userRes = await fetch('http://8.149.232.39:5550/api/user', { credentials: 'include' });
+=======
+      const userRes = await fetch('http://127.0.0.1:5550/api/user', { credentials: 'include' });
+>>>>>>> refs/remotes/origin/main
       if (userRes.ok) {
         const userData = await userRes.json();
         setCredits(userData.credits);
