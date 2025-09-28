@@ -14,10 +14,6 @@ from flask_cors import CORS
 from bcrypt import hashpw, gensalt, checkpw
 from flask_migrate import Migrate
 from dotenv import load_dotenv
-
-load_dotenv()
-from dotenv import load_dotenv
-
 load_dotenv()
 
 # 将 api 目录添加到系统路径
@@ -27,16 +23,14 @@ from api.jimeng_api import jimeng_generate_api
 
 # 应用配置
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql://your_db_user:your_db_password@localhost:5433/meme_generator')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://your_db_user:your_db_password@localhost:5432/meme_generator')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a_very_secret_key_for_session')
-app.config.update(
-    SESSION_COOKIE_SAMESITE='Lax',
-)
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'a_very_secret_key_for_session')
+app.config.update(SESSION_COOKIE_SAMESITE='Lax')
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 # 从环境变量中获取新加坡服务的URL
-SINGAPORE_GEMINI_API_URL = os.environ.get('SINGAPORE_GEMINI_API_URL')
+SINGAPORE_GEMINI_API_URL = os.getenv('SINGAPORE_GEMINI_API_URL')
 if not SINGAPORE_GEMINI_API_URL:
     logging.critical("SINGAPORE_GEMINI_API_URL is not set in environment variables!")
     sys.exit(1)
@@ -46,7 +40,13 @@ db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 migrate = Migrate(app, db)
-CORS(app, resources={r"/api/*": {"origins": ["http://8.149.232.39:4000", "http://127.0.0.1:4000"], "supports_credentials": True}})
+CORS(app, resources={r"/api/*": {"origins": 
+    [
+        os.getenv('NEXT_PUBLIC_ALLOWED_ORIGINS'), 
+        os.getenv("NEXT_PUBLIC_ALLOWED_ORIGINS")
+    ], 
+    "supports_credentials": True}}
+)
 
 
 # 配置日志
@@ -147,7 +147,7 @@ def serve_generated_image(filename):
     通过 HTTP 接口向前端提供生成的图片文件
     """
     # 构造完整的本地文件路径
-    image_dir = os.environ.get("DEFAULT_IMAGE_DIR", "/root/ai-gengtu-backend/images")
+    image_dir = os.getenv("IMAGES_PATH", "./images")
     full_path = os.path.join(image_dir, filename)
     
     # 检查文件是否存在
@@ -363,7 +363,7 @@ def generate_figurine():
 
     # (可选) 保存上传的文件以备将来使用，这里我们仅验证上传成功
     filename = secure_filename(file.filename)
-    file.save(os.path.join('//root/ai-gengtu-backend/uploads', filename))
+    file.save(os.path.join(os.getenv("UPLOADS"), filename))
 
     # 4. 创建生成记录
     logging.info("Creating new generation record for figurine.")

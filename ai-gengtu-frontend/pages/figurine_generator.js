@@ -14,7 +14,7 @@ export default function FigurineGeneratorPage() {
 
   const fetchUserData = useCallback(async () => {
     try {
-      const userRes = await fetch('http://8.149.232.39:5550/api/user', { credentials: 'include' });
+      const userRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user`, { credentials: 'include' });
       if (userRes.ok) {
         const userData = await userRes.json();
         setCredits(userData.credits);
@@ -30,7 +30,7 @@ export default function FigurineGeneratorPage() {
   // 注意：这里我们让历史记录获取所有类型的生成，也可以后续在后端增加type字段进行区分
   const fetchHistory = useCallback(async () => {
     try {
-      const historyRes = await fetch('http://8.149.232.39:5550/api/history', { credentials: 'include' });
+      const historyRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/history`, { credentials: 'include' });
       if (historyRes.ok) {
         const historyData = await historyRes.json();
         // 简单过滤一下，只显示手办历史
@@ -76,7 +76,7 @@ export default function FigurineGeneratorPage() {
     formData.append('image', imageFile);
 
     try {
-      const response = await fetch('http://8.149.232.39:5550/api/generate_figurine', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/generate_figurine`, {
         method: 'POST',
         body: formData,
         credentials: 'include'
@@ -162,7 +162,7 @@ export default function FigurineGeneratorPage() {
             {history.map((item) => (
               <div key={item.id} className={styles.historyItem}>
                 <img
-                  src={`http://8.149.232.39:5550${item.image_url}`}
+                  src={`${process.env.NEXT_PUBLIC_API_BASE_URL}${item.image_url}`}
                   alt={item.riddle_answer}
                   className={styles.historyImage}
                 />

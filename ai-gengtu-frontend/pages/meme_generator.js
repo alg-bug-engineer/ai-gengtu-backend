@@ -14,7 +14,7 @@ export default function MemeGeneratorPage() {
 
   const fetchUserData = useCallback(async () => {
     try {
-      const userRes = await fetch('http://8.149.232.39:5550/api/user', { credentials: 'include' });
+      const userRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/user`, { credentials: 'include' });
       if (userRes.ok) {
         const userData = await userRes.json();
         setCredits(userData.credits);
@@ -30,7 +30,7 @@ export default function MemeGeneratorPage() {
 
   const fetchHistory = useCallback(async () => {
     try {
-      const historyRes = await fetch('http://8.149.232.39:5550/api/history', { credentials: 'include' });
+      const historyRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/history`, { credentials: 'include' });
       if (historyRes.ok) {
         const historyData = await historyRes.json();
         setHistory(historyData);
@@ -59,7 +59,7 @@ export default function MemeGeneratorPage() {
     setImageUrl(null);
 
     try {
-      const response = await fetch('http://8.149.232.39:5550/api/generate_meme', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/generate_meme`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ answer, selectedSize }),
@@ -148,7 +148,7 @@ export default function MemeGeneratorPage() {
             {history.map((item) => (
               <div key={item.id} className={styles.historyItem}>
                 <img
-                  src={`http://8.149.232.39:5550${item.image_url}`}
+                  src={`${process.env.NEXT_PUBLIC_API_BASE_URL}${item.image_url}`}
                   alt={item.riddle_answer}
                   className={styles.historyImage}
                 />

@@ -14,7 +14,7 @@ export default function Sidebar() {
 
   const handleLogout = async () => {
     try {
-      await fetch('http://8.149.232.39:5550/api/logout', { credentials: 'include' });
+      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/logout`, { credentials: 'include' });
       router.push('/login');
     } catch (error) {
       console.error('Logout failed:', error);

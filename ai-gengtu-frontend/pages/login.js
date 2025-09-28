@@ -19,7 +19,7 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const response = await fetch('http://8.149.232.39:5550/api/login', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

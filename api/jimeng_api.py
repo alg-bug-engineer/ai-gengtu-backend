@@ -25,13 +25,12 @@ import requests
 from dotenv import load_dotenv
 import logging  # 日志模块
 
-
 # ------------------------------
 # 2. 日志系统初始化（输出到文件+控制台）
 # ------------------------------
 """初始化日志配置：同时输出到指定文件和控制台"""
 # 日志目录（用户指定路径）
-LOG_DIR = "/root/ai-gengtu-backend/logs"
+LOG_DIR = os.getenv('LOGS_PATH')
 # 确保日志目录存在（不存在则创建）
 os.makedirs(LOG_DIR, exist_ok=True)
 
@@ -53,12 +52,10 @@ logging.basicConfig(
     ]
 )
 
-
 # ------------------------------
 # 3. 全局配置加载（从.env文件读取密钥和路径）
 # ------------------------------
-# 加载.env环境变量
-load_dotenv()
+
 logging.info("成功加载.env环境变量文件")
 
 # API固定配置（火山引擎即梦生图）
@@ -77,7 +74,7 @@ SECRET_KEY = os.getenv("secret_key")
 # 从.env读取默认图片保存路径（可选，默认路径为用户指定的默认值）
 DEFAULT_IMAGE_DIR = os.getenv(
     "default_dir", 
-    "/root/ai-gengtu-backend/images"
+    "./images"
 )
 
 

@@ -5,3 +5,8 @@ images
 */*/__pycache__
 __pycache__
 migrations/
+uploads
+tests
+migrations
+.env.production
+.env.development

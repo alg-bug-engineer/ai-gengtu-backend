@@ -10,10 +10,11 @@ import os
 import sys
 import logging
 from datetime import datetime
-from typing import Optional
 from dotenv import load_dotenv
+from typing import Optional, List
 import vertexai
-from vertexai.generative_models import GenerativeModel
+from vertexai.preview.vision_models import ImageGenerationModel
+from vertexai.generative_models import GenerativeModel, Image
 
 # 加载环境变量
 load_dotenv()
@@ -23,7 +24,7 @@ load_dotenv()
 # ------------------------------
 """初始化日志配置，同时输出到文件和控制台"""
 # 日志目录（可根据需要修改）
-LOG_DIR = "/root/ai-gengtu-backend/logs"
+LOG_DIR = os.getenv("LOGS_PATH")
 os.makedirs(LOG_DIR, exist_ok=True)  # 确保日志目录存在
 
 # 日志文件名（按日期命名）
@@ -175,6 +176,79 @@ def genemi_generate_api(prompt: str) -> Optional[str]:
     except Exception as e:
         logging.info("Gemini API调用失败：%s", str(e), exc_info=True)
         raise  # 抛出异常，由上层决定处理方式
+
+
+# ------------------------------
+# 新增核心功能函数 (立体雕塑生成)
+# ------------------------------
+def generate_figurine_image(uploaded_image_bytes: bytes) -> Optional[bytes]:
+    """
+    接收上传的图片，使用Gemini生成手办图片。
+    
+    流程:
+    1. 使用多模态模型分析图片中的人物特征。
+    2. 将特征描述与固定的手办提示词模板结合。
+    3. 使用Imagen模型根据最终提示词生成图片。
+
+    参数:
+        uploaded_image_bytes: 用户上传的图片的二进制数据。
+        
+    返回:
+        Optional[bytes]: 成功返回生成图片的二进制数据；失败返回None。
+    """
+    logging.info("=" * 50)
+    logging.info("开始立体雕塑生成流程...")
+    logging.info("=" * 50)
+
+    try:
+        # 步骤 1: 使用多模态模型分析图片
+        logging.info("步骤 1: 使用 Gemini Vision 模型分析图片...")
+        multimodal_model = GenerativeModel("gemini-pro-vision")
+        input_image = Image.from_bytes(uploaded_image_bytes)
+        
+        # 提示 Gemini Vision 提取关键外貌特征
+        analysis_prompt = "Describe the key visual features of the person in this image for a character designer. Focus on hair style and color, face shape, gender, and clothing style."
+        
+        response = multimodal_model.generate_content([analysis_prompt, input_image])
+        character_description = response.text
+        logging.info(f"图片分析完成，人物特征描述: {character_description}")
+
+        # 步骤 2: 结合特征描述和固定模板，生成最终的生图Prompt
+        logging.info("步骤 2: 构建最终的文生图提示词...")
+        base_prompt = (
+            "A 1/7 scale commercialized figurine of a character described as: '{description}'. "
+            "The figurine is in a realistic style, placed in a real environment on a computer desk. "
+            "It has a round transparent acrylic base with no text. "
+            "The computer screen in the background shows a 3D modeling process of this figurine. "
+            "Next to the computer is a high-quality toy packaging box with 2D flat illustrations of the character."
+        )
+        final_prompt = base_prompt.format(description=character_description)
+        logging.info(f"最终提示词: {final_prompt}")
+
+        # 步骤 3: 使用 Imagen 模型生成图片
+        logging.info("步骤 3: 调用 Imagen 模型生成图片...")
+        # 假设 .env 中配置的 model_name 对于 Imagen 是有效的，或者直接指定
+        # 注意: 'imagen-2' 是一个示例模型名称, 可能需要根据您的GCP项目进行调整
+        image_generation_model = ImageGenerationModel.from_pretrained("imagegeneration@005")
+        
+        images: List[GeneratedImage] = image_generation_model.generate_images(
+            prompt=final_prompt,
+            number_of_images=1,
+            aspect_ratio="1:1" # 生成方形图片
+        )
+        
+        if not images:
+            logging.error("Imagen 模型未能生成图片。")
+            return None
+
+        generated_image_bytes = images[0]._image_bytes
+        logging.info("图片生成成功！")
+        
+        return generated_image_bytes
+
+    except Exception as e:
+        logging.error(f"立体雕塑生成流程失败: {e}", exc_info=True)
+        return None
 
 
 # ------------------------------
