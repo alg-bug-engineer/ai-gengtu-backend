@@ -26,7 +26,8 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://your_db_user:your_db_password@localhost:5432/meme_generator')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'a_very_secret_key_for_session')
-app.config.update(SESSION_COOKIE_SAMESITE='Lax')
+# app.config.update(SESSION_COOKIE_SAMESITE='Lax')
+app.config.update(SESSION_COOKIE_SAMESITE='None')
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 # 从环境变量中获取新加坡服务的URL
@@ -42,7 +43,7 @@ login_manager.init_app(app)
 migrate = Migrate(app, db)
 CORS(app, resources={r"/api/*": {"origins": 
     [
-        os.getenv('NEXT_PUBLIC_ALLOWED_ORIGINS'), 
+        os.getenv('NEXT_PUBLIC_API_BASE_URL'), 
         os.getenv("NEXT_PUBLIC_ALLOWED_ORIGINS")
     ], 
     "supports_credentials": True}}

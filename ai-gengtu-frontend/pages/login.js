@@ -15,6 +15,7 @@ export default function LoginPage() {
     e.preventDefault();
     console.log('handleSubmit: Login form submitted.');
     console.log('Attempting to log in with email:', email);
+    console.log(process.env.NEXT_PUBLIC_API_BASE_URL)
     setLoading(true);
     setError(null);
 
